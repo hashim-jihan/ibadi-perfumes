@@ -1,0 +1,98 @@
+{% extends 'adminibadi/base.html' %}
+{% load static %}
+
+{% block title %}Ibadi - Add Product{% endblock %}
+
+{% block customCss %}
+<link rel="stylesheet" href="{% static 'adminibadi/addProduct.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0 font-weight-bold">Add Product</h2>
+        <a href="{% url 'productsList' %}" class="btn btn-primary">Back to Products</a>
+    </div>
+
+    <!-- Add Product Form -->
+    <form action="{% url 'addProduct' %}" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row">
+            <!-- Product Name -->
+            <div class="col-md-6 mb-3">
+                <label for="product_name" class="form-label">Product Name</label>
+                <input type="text" class="form-control" id="product_name" name="product_name">
+            </div>
+
+            <!-- Category -->
+            <div class="col-md-6 mb-3">
+                <label for="category" class="form-label">Category</label>
+                <select class="form-select" id="category" name="category">
+                    <option value="">Select Category</option>
+                    {% for category in categories %}
+                        <option value="{{ category.category_id }}">{{ category.category_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+
+            <!-- Variants Selection with Radio Button -->
+            <div class="col-md-6 mb-3">
+                <label for="variant" class="form-label">Variant</label>
+                <select class="form-select" id="variant" name="variant">
+                    <option value="">Select Variant</option>
+                    {% for variant in variants %}
+                        <option value="{{ variant.variant_id }}">{{ variant.variant_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Quantity -->
+            <div class="col-md-6 mb-3">
+                <label for="quantity" class="form-label">Quantity</label>
+                <input type="number" class="form-control" id="quantity" name="quantity">
+            </div>
+
+            <!-- Regular Price -->
+            <div class="col-md-6 mb-3">
+                <label for="regular_price" class="form-label">Regular Price</label>
+                <input type="number" class="form-control" id="regular_price" name="regular_price" step="0.01">
+            </div>
+
+            <!-- Selling Price -->
+            <div class="col-md-6 mb-3">
+                <label for="selling_price" class="form-label">Selling Price</label>
+                <input type="number" class="form-control" id="selling_price" name="selling_price" step="0.01">
+            </div>
+
+            <!-- Description -->
+            <div class="col-md-12 mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="4"></textarea>
+            </div>
+
+            <!-- Product Images -->
+            <div class="col-md-4 mb-3">
+                <label for="image1" class="form-label">Image 1</label>
+                <input type="file" class="form-control" id="image1" name="image1" accept="image/*">
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label for="image2" class="form-label">Image 2</label>
+                <input type="file" class="form-control" id="image2" name="image2" accept="image/*">
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label for="image3" class="form-label">Image 3</label>
+                <input type="file" class="form-control" id="image3" name="image3" accept="image/*">
+            </div>
+
+            <!-- Submit Button -->
+            <div class="col-md-12 text-center mt-4">
+                <button type="submit" class="btn btn-success btn-lg">Add Product</button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

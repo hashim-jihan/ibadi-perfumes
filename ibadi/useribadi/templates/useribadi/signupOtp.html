@@ -1,0 +1,69 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ibadi Perfume - OTP Verification</title>
+    
+    <!-- alertify CSS -->
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.14.0/build/css/alertify.min.css"/>
+    <!-- alertify Default theme -->
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.14.0/build/css/themes/default.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+    <link rel="stylesheet" href="{% static 'useribadi/signupOtp.css' %}">
+
+</head>
+<body>
+    <div class="otp-container">
+        <div class="otp-box">
+            <h1>Verify Your Account</h1>
+            <p class="otp-instruction">Enter the 6-digit OTP sent to your email.</p>
+            {% if otpExpirationTime %}
+                <p class="otp timer" style="color:white">Your OTP will expire at <strong>{{ otpExpirationTime|date:"H:i:s A"}}</strong></p>
+            {% endif %}
+                    <form action="{% url 'signupOtp'%}" method="POST" novalidate>
+                {% csrf_token %}
+                <div class="otp-input-container">
+                    <input type="text" name="otp" placeholder="Enter OTP" maxlength="6" required>
+                </div>
+                <button type="submit" class="verify-btn">Verify OTP</button>
+            </form>
+            <p class="resend-link">Didn't receive the code? <a href="{% url 'resendOtp' %}">Resend OTP</a></p>
+        </div>
+    </div>
+
+    <!-- alertify JavaScript -->
+    <script src="//cdn.jsdelivr.net/npm/alertifyjs@1.14.0/build/alertify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        {% if messages %}
+        {% for message in messages %}
+            {% if 'error' in message.tags %}
+            Swal.fire({
+                toast: true,
+                position: 'top-right',
+                icon: 'error',
+                title: '{{ message }}',
+                showConfirmButton: false,
+                timer: 3000
+            });
+            {% elif 'success' in message.tags %}
+            Swal.fire({
+                toast: true,
+                position: 'top-right',
+                icon: 'success',
+                title: '{{ message }}',
+                showConfirmButton: false,
+                timer: 3000
+            });
+            {% endif %}
+        {% endfor %}
+        {% endif %}
+    </script>
+    
+
+</body>
+</html>

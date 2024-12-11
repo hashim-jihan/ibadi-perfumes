@@ -1,0 +1,68 @@
+{% extends 'useribadi/base.html' %}
+
+{% block content %}
+
+
+<div class="container mt-5">
+    <div class="row">
+        <!-- Sidebar -->
+        <aside class="col-lg-3 col-md-4 mb-4">
+            <div class="bg-dark p-4 rounded min-vh-75">
+                <h4 class="text-warning">Filters</h4>
+                <hr class="text-warning">
+                <div class="filter-group">
+                    <h6 class="text-warning">Category</h6>
+                    <div>
+                        <label>
+                            <input type="radio" name="category" value="perfumes"> Perfumes
+                        </label>
+                    </div>
+                    <div>
+                        <label>
+                            <input type="radio" name="category" value="attar"> Attar
+                        </label>
+                    </div>
+                </div>
+                <div class="filter-group mt-3">
+                    <h6 class="text-warning">Size</h6>
+                    <div>
+                        <label>
+                            <input type="radio" name="size" value="50ml"> 50ml
+                        </label>
+                    </div>
+                    <div>
+                        <label>
+                            <input type="radio" name="size" value="100ml"> 100ml
+                        </label>
+                    </div>
+                </div>
+                <button class="btn btn-warning w-100 mt-4">Apply Filters</button>
+            </div>
+        </aside>
+
+        <!-- Products Section -->
+
+        <section class="col-lg-9 col-md-8">
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
+                {% for product in product_list %}
+                <div class="col">
+                    <div class="card shop-product-card bg-dark text-warning border-warning shadow-sm mb-4">
+                        {% if product.imageUrl %}
+                        <a href="{% url 'productPage' product.id %}">
+                            <img src="{{ product.imageUrl }}" class="card-img-top" alt="{{ product.name }}">
+                        </a>
+                        {% endif %}
+                        <div class="card-body text-center">
+                            <h5 class="card-title">{{ product.name }}</h5>
+                            <p class="card-text text-light">${{ product.price }}</p>
+                            <button class="btn btn-warning btn-sm">Add to Cart</button>
+                            <button class="btn btn-outline-warning btn-sm"><i class="fas fa-heart"></i></button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

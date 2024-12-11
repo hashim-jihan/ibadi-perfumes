@@ -1,0 +1,177 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Body Styling */
+body {
+    background-color: #121212; /* Black background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+/* Login Container */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #1c1c1e; /* Slightly lighter black */
+    border-radius: 15px;
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.4);
+    width: 90%;
+    max-width: 900px;
+    overflow: hidden;
+    flex-wrap: wrap;
+}
+
+/* Image Container */
+.image-container {
+    flex: 1;
+    padding: 20px;
+}
+
+.image-container img {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.6);
+}
+
+/* Form Container */
+.form-container {
+    flex: 1;
+    padding: 40px;
+    text-align: center;
+}
+
+/* Heading */
+h1 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    color: #ffd700; /* Yellow color */
+}
+
+/* Form Group */
+.form-group {
+    margin-bottom: 20px;
+}
+
+/* Input Fields */
+.form-group input {
+    width: 100%;
+    padding: 15px;
+    font-size: 16px;
+    border-radius: 5px;
+    border: 1px solid #444;
+    background-color: #2b2b2b;
+    color: #fff;
+    transition: border-color 0.3s, background-color 0.3s;
+}
+
+.form-group input::placeholder {
+    color: #bbb;
+}
+
+.form-group input:focus {
+    border-color: #ffd700; /* Gold border on focus */
+    background-color: #333;
+}
+
+/* Login Button */
+.login-btn {
+    width: 100%;
+    padding: 15px;
+    font-size: 18px;
+    color: #fff;
+    background-color: #ffd700;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.login-btn:hover {
+    background-color: #e6c200; /* Slightly darker yellow */
+    transform: scale(1.05);
+}
+
+/* Signup Link */
+.signup-link {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #bbb;
+}
+
+.signup-link a {
+    color: #ffd700;
+    text-decoration: none;
+}
+
+.signup-link a:hover {
+    text-decoration: underline;
+}
+
+/* Divider for Google Login */
+.or-divider {
+    margin: 20px 0;
+    font-size: 14px;
+    color: #bbb;
+}
+
+.or-divider span {
+    font-weight: bold;
+}
+
+/* Google Login Button */
+.google-login-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 5px;
+    color: #1c1c1e;
+    font-size: 16px;
+    font-weight: bold;
+    text-decoration: none;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.google-login-btn img {
+    width: 20px;
+    height: 20px;
+}
+
+.google-login-btn:hover {
+    background-color: #f7f7f7;
+    transform: scale(1.02);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .login-container {
+        flex-direction: column;
+        padding: 10px;
+    }
+
+    .form-container {
+        width: 100%;
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    .image-container img {
+        max-height: 250px;
+    }
+}

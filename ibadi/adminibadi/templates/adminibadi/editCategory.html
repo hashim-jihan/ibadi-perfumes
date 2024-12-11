@@ -1,0 +1,43 @@
+{% extends 'adminibadi/base.html' %}
+{% load static %}
+
+{% block title %}Edit Category{% endblock %}
+
+{% block customCss %}
+<link rel="stylesheet" href="{% static 'adminibadi/edit_category.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4 font-weight-bold text-center">Edit Category</h2>
+
+    <form method="POST" class="bg-light p-4 rounded shadow-sm">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="categoryName" class="form-label">Category Name</label>
+            <input 
+                type="text" 
+                class="form-control" 
+                id="categoryName" 
+                name="category_name" 
+                value="{{ category.category_name }}" 
+                placeholder="Enter category name" 
+                required>
+        </div>
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea 
+                class="form-control" 
+                id="description" 
+                name="description" 
+                rows="4" 
+                placeholder="Enter category description" 
+                >{{ category.description }}</textarea>
+        </div>
+        <div class="d-flex justify-content-between align-items-center">
+            <button type="submit" name="update" class="btn btn-primary">Update</button>
+            <button type="submit" name="delete" class="btn btn-danger">Delete</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

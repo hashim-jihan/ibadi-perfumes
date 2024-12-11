@@ -1,0 +1,83 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ibadi Perfumes - Login</title>
+    <!-- alertify CSS -->
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.14.0/build/css/alertify.min.css"/>
+    <!-- alertify Default theme -->
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.14.0/build/css/themes/default.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="{% static 'useribadi/userLogin.css' %}">
+
+</head>
+<body>
+    <div class="login-container">
+        <div class="image-container">
+            <img src="{% static 'useribadi/images/logoibadi.jpg' %}" alt="Login Image">
+        </div>
+        <div class="form-container">
+            <h1>Welcome Admin</h1>
+            <form action="{% url 'adminLogin' %}" method="POST">
+                {% csrf_token %}
+                <div class="form-group">
+                    {{ form.email }}
+                    <div class="error-message" style="color: red">
+                    {% if form.email.errors%}
+                    {% for error in form.email.errors %}
+                            <p>{{ error }}</p>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+                <br>
+                <div class="form-group">
+                    {{ form.password }}
+                    <div class="error-message" style="color: red">
+                    {% if form.password.errors%}
+                    {% for error in form.password.errors %}
+                            <p>{{ error }}</p>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+                <br>
+                <button type="submit" class="login-btn">Login</button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- alertify JavaScript -->
+    <script src="//cdn.jsdelivr.net/npm/alertifyjs@1.14.0/build/alertify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        {% if messages %}
+        {% for message in messages %}
+            {% if 'error' in message.tags %}
+            Swal.fire({
+                toast: true,
+                position: 'top-right',
+                icon: 'error',
+                title: '{{ message }}',
+                showConfirmButton: false,
+                timer: 3000
+            });
+            {% elif 'success' in message.tags %}
+            Swal.fire({
+                toast: true,
+                position: 'top-right',
+                icon: 'success',
+                title: '{{ message }}',
+                showConfirmButton: false,
+                timer: 3000
+            });
+            {% endif %}
+        {% endfor %}
+        {% endif %}
+    </script>
+
+</body>
+</html>

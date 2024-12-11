@@ -1,0 +1,86 @@
+{% extends 'adminibadi/base.html' %}
+{% load static %}
+
+{% block title %}Ibadi - Manage Products{% endblock %}
+
+{% block customCss %}
+<link rel="stylesheet" href="{% static 'adminibadi/products.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0 font-weight-bold">Manage Products</h2>
+        <form method="get" action="" class="d-flex w-50">
+            <input type="text" class="form-control" name="search" placeholder="Search products..." value="{{ request.GET.search }}">
+            <button type="submit" class="btn btn-primary ms-2">Search</button>
+        </form>
+        <a href="{% url 'addProduct' %}" class="btn btn-success">Add Product</a>
+    </div>
+
+    <!-- Products Table -->
+    <table class="table table-hover table-bordered align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>SL No</th>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Variants</th>
+                <th>Actions</th>
+                <th>Edit</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ product.product_name }}</td>
+                    <td>{{ product.category.category_name }}</td>
+                    <td>{{ product.selling_price }}</td>
+                    <td>{{ product.quantity }}</td>
+                    <td>{{ product.variant.variant_name }}</td>
+
+
+                    <td>
+                            {% if product.is_active %}
+                                <a href="{% url 'productStatus' product.product_id %}" class="btn btn-danger btn-sm btn-action">Unlist</button>
+                            {% else %}
+                                <a href="{% url 'productStatus' product.product_id %}" class="btn btn-success btn-sm btn-action">List</button>
+                            {% endif %}
+                    </td>
+                    
+
+
+                    <td>
+                        <a href="{% url 'editProduct' product.product_id %}" class="btn btn-warning btn-sm btn-action">Edit</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center">No products found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <nav aria-label="Page navigation example">
+        <ul class="pagination justify-content-center">
+            {% if products.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ products.previous_page_number }}&search={{ request.GET.search }}">Previous</a></li>
+            {% endif %}
+            {% for num in products.paginator.page_range %}
+                <li class="page-item {% if products.number == num %}active{% endif %}">
+                    <a class="page-link" href="?page={{ num }}&search={{ request.GET.search }}">{{ num }}</a>
+                </li>
+            {% endfor %}
+            {% if products.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ products.next_page_number }}&search={{ request.GET.search }}">Next</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endblock %}

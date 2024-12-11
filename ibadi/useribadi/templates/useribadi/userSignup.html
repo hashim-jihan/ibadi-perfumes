@@ -1,0 +1,84 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ibadi Perfumes - Signup</title>
+    <link rel="stylesheet" href="{% static 'useribadi/userSignup.css' %}">
+
+
+</head>
+<body>
+    <div class="signup-container">
+        <div class="content-wrapper">
+            <div class="image-container">
+                <img src="{% static 'useribadi/images/ibadihot.webp' %}" alt="Perfume Image">
+            </div>
+            <div class="form-container">
+                <h1>JOIN IBADI PERFUMES</h1>
+
+                
+                <form action="{% url 'userSignup' %}" method="POST" novalidate>
+                    {% csrf_token %}
+                    <div class="form-group">
+                        {{ form.full_name }}
+                        <div class="error-message" style="color: red">
+                            {% if form.full_name.errors %}
+                            {% for error in form.full_name.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        {{ form.email }}
+                        <div class="error-message" style="color: red">
+                            {% if form.email.errors %}
+                            {% for error in form.email.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        {{ form.password }}
+                        <div class="error-message" style="color: red">
+                            {% if form.password.errors %}
+                            {% for error in form.password.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        {{ form.confirm_password }}
+                        <div class="error-message" style="color: red">
+                            {% if form.confirm_password %}
+                            {% for error in form.confirm_password.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <button type="submit" class="signup-btn">Sign Up</button>
+                </form>
+
+                <p class="or-divider">OR</p>
+                <a href="#" class="google-signup-btn">
+                    <img src="{% static 'useribadi/images/google.webp' %}" alt="Google Icon"> Sign Up with Google
+                </a>
+                <p class="login-link">Already have an account? <a href="{% url 'userLogin' %}">Login here</a></p>
+            </div>
+        </div>
+    </div>
+
+
+    
+    
+</body>
+</html>

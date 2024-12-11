@@ -1,0 +1,212 @@
+{% extends 'useribadi/base.html' %}
+
+{% load static %}
+
+{% block customCss %}
+{{ block.super }}
+<style>
+    /* Product page specific styles that build upon base styles */
+    .bg-dark-custom {
+        background-color: var(--secondary-color);
+        border: 1px solid var(--yellow-color);
+    }
+
+    .btn-warning-outline {
+        color: var(--yellow-color);
+        border-color: var(--yellow-color);
+        background-color: transparent;
+    }
+
+    .btn-warning-outline:hover {
+        background-color: var(--yellow-color);
+        color: var(--dark-color);
+    }
+
+    .product-image-thumbnails {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .product-image-thumbnails img {
+        cursor: pointer;
+        transition: transform 0.3s ease;
+    }
+
+    .product-image-thumbnails img:hover {
+        transform: scale(1.05);
+    }
+
+    /* Ensure dark theme compatibility */
+    .form-control.bg-dark {
+        background-color: var(--dark-color) !important;
+        color: var(--light-color) !important;
+        border-color: var(--yellow-color) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row g-5">
+        <!-- Product Images Section -->
+        <div class="col-lg-6">
+            <div class="row">
+                <div class="col-3 product-image-thumbnails">
+                    <!-- Thumbnail Images -->
+                    {% for image in images|slice:":3" %}
+                    <img src="{{ image.images.url }}" 
+                         class="img-fluid mb-3 rounded border border-warning" 
+                         alt="Thumbnail {{ forloop.counter }}" 
+                         onclick="changeMainImage('{{ image.images.url }}')">
+                    {% endfor %}
+                </div>
+                <div class="col-9">
+                    <!-- Main Image -->
+                    {% if mainImage %}
+                    <img id="mainImage" 
+                         src="{{ mainImage.images.url }}" 
+                         class="img-fluid rounded shadow-lg" 
+                         alt="{{ product.product_name }}">
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Details -->
+        <div class="col-lg-6 bg-dark-custom p-4 rounded">
+            <h1 class="fw-bold text-warning">{{ product.product_name }}</h1>
+            <h3 class="text-warning mb-3 text-white">₹ {{ product.selling_price }}</h3>
+            
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <!-- Stock Status -->
+                {% if product.quantity == 0 %}
+                <span class="badge bg-danger">Out of Stock</span>
+                {% else %}
+                <span class="badge bg-success">In Stock</span>
+                {% endif %}
+                
+                <!-- Rating -->
+                <div class="rating">
+                    <i class="fas fa-star text-warning"></i>
+                    <i class="fas fa-star text-warning"></i>
+                    <i class="fas fa-star text-warning"></i>
+                    <i class="fas fa-star-half-alt text-warning"></i>
+                    <i class="far fa-star text-warning"></i>
+                </div>
+            </div>
+
+            {% comment %} <p class="text-muted mb-4">{{ product.description }}</p> {% endcomment %}
+
+            <!-- Size Selector -->
+            <div class="mb-4">
+                <h5 class="text-warning">Size</h5>
+                <div class="btn-group " role="group">
+                    <input type="radio" class="btn-check" name="size" id="size50" autocomplete="off">
+                    <label class="btn btn-warning-outline text-warning" for="size50">50 ml</label>
+
+                    <input type="radio" class="btn-check" name="size" id="size100" autocomplete="off">
+                    <label class="btn btn-warning-outline text-warning" for="size100">100 ml</label>
+                </div>
+            </div>
+
+            <!-- Quantity Selector -->
+            <div class="mb-4 text-warning">
+                <h5 class="text-warning">Quantity</h5>
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-warning-outline" id="quantity-decrease">-</button>
+                    <input type="number" 
+                           class="form-control text-center mx-2 bg-dark text-warning border-warning" 
+                           value="1" 
+                           id="quantity" 
+                           style="width: 80px;" 
+                           disabled>
+                    <button class="btn btn-warning-outline" id="quantity-increase">+</button>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-3 text-warning">
+                <button class="btn btn-warning flex-grow-1 fw-bold">
+                    <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                </button>
+                <button class="btn btn-warning-outline flex-grow-1 fw-bold">
+                    <i class="fas fa-heart me-2"></i>Add to Wishlist
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Description & Reviews Tabs -->
+    <div class="row mt-5">
+        <div class="col-12 col-lg-10 mx-auto">
+            <ul class="nav nav-tabs" id="product-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active text-warning" id="description-tab" data-bs-toggle="tab" data-bs-target="#description" type="button" role="tab">Description</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-warning" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button" role="tab">Reviews</button>
+                </li>
+            </ul>
+            <div class="tab-content mt-4 bg-dark-custom p-4 rounded">
+                <div class="tab-pane fade show active" id="description" role="tabpanel">
+                    <p>{{ product.description }}</p>
+                </div>
+                <div class="tab-pane fade" id="reviews" role="tabpanel">
+                    <p>No reviews yet. Be the first to review this product!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Products -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3 class="text-warning mb-4">Related Products</h3>
+            <div class="row g-4">
+                {% for related_product in related_products %}
+                <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="card shop-product-card bg-dark-custom border border-warning text-warning shadow-sm">
+                        {% with related_product.product_images.first as mainImage %}
+                        <a href="{% url 'productPage' related_product.product_id %}">
+                            <img src="{{ mainImage.images.url }}" class="card-img-top" alt="{{ related_product.product_name }}">
+                        </a>
+                        {% endwith %}
+                        <div class="card-body text-center">
+                            <h5 class="card-title">{{ related_product.product_name }}</h5>
+                            <p class="text-white">₹ {{ related_product.selling_price }}</p>
+                            <div class="d-flex justify-content-center gap-2 mt-3">
+                                <button class="btn btn-warning btn-sm">Add to Cart</button>
+                                <button class="btn btn-warning-outline btn-sm"><i class="fas fa-heart"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    function changeMainImage(imageUrl) {
+        document.getElementById('mainImage').src = imageUrl;
+    }
+
+    // Quantity control
+    const quantityInput = document.getElementById('quantity');
+    const decreaseBtn = document.getElementById('quantity-decrease');
+    const increaseBtn = document.getElementById('quantity-increase');
+
+    decreaseBtn.addEventListener('click', () => {
+        if (parseInt(quantityInput.value) > 1) {
+            quantityInput.value = parseInt(quantityInput.value) - 1;
+        }
+    });
+
+    increaseBtn.addEventListener('click', () => {
+        quantityInput.value = parseInt(quantityInput.value) + 1;
+    });
+</script>
+{% endblock %}
+{% endblock %}

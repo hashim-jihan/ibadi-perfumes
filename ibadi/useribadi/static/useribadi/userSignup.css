@@ -1,0 +1,186 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Body Styling */
+body {
+    background-color: #1c1c1e; /* Rich dark background */
+    color: #ffffff; /* Default text color */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* Signup Container */
+.signup-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #2e2e30; /* Dark gray with subtle contrast */
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.4);
+    width: 90%;
+    max-width: 900px;
+}
+
+/* Content Wrapper */
+.content-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Image Container */
+.image-container {
+    flex: 1;
+    padding: 20px;
+    text-align: center;
+}
+
+.image-container img {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 12px;
+    border: 3px solid #ffd700; /* Gold border for a luxurious feel */
+}
+
+/* Form Container */
+.form-container {
+    flex: 1;
+    padding: 30px;
+    text-align: center;
+}
+
+h1 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    color: #ffd700; /* Gold heading color */
+}
+
+/* Form Group Styling */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #444; /* Subtle border */
+    border-radius: 5px;
+    outline: none;
+    background: #1c1c1e; /* Matches the dark background */
+    color: #ffffff;
+}
+
+.form-group input::placeholder {
+    color: #bbbbbb; /* Subtle placeholder color */
+}
+
+.form-group input:focus {
+    border-color: #ffd700; /* Gold focus outline */
+    background: #2e2e30;
+}
+
+/* Button Styles */
+.signup-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #1c1c1e; /* Dark text */
+    background-color: #ffd700; /* Luxurious gold */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out, transform 0.2s ease;
+}
+
+.signup-btn:hover {
+    background-color: #e6c200; /* Slightly darker gold */
+    transform: scale(1.05); /* Subtle hover effect */
+}
+
+/* Divider for OR */
+.or-divider {
+    margin: 20px 0;
+    font-size: 14px;
+    font-weight: bold;
+    color: #bbbbbb;
+    text-align: center;
+}
+
+/* Google Sign-Up Button */
+.google-signup-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #1c1c1e; /* Dark text */
+    background-color: #ffffff; /* White button */
+    border: 1px solid #ddd; /* Subtle border */
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.3s ease-in-out, transform 0.2s ease;
+}
+
+.google-signup-btn img {
+    width: 20px;
+    height: 20px;
+}
+
+.google-signup-btn:hover {
+    background-color: #f7f7f7; /* Slightly darker white */
+    transform: scale(1.02);
+}
+
+/* Login Link */
+.login-link {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #bbbbbb;
+}
+
+.login-link a {
+    color: #ffd700;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.login-link a:hover {
+    text-decoration: underline;
+    color: #e6c200; /* Slightly darker gold on hover */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .content-wrapper {
+        flex-direction: column;
+    }
+
+    .image-container,
+    .form-container {
+        flex: none;
+        width: 100%;
+        padding: 10px;
+    }
+}
+
+
+
+
+
+

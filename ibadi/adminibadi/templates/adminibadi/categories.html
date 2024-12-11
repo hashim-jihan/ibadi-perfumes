@@ -1,0 +1,73 @@
+{% extends 'adminibadi/base.html' %}
+{% load static %}
+
+{% block title %}Ibadi - Manage Categories{% endblock %}
+
+{% block customCss %}
+<link rel="stylesheet" href="{% static 'adminibadi/categories.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0 font-weight-bold">Manage Categories</h2>
+        <form method="get" action="" class="d-flex w-50">
+            <input type="text" class="form-control" name="search" placeholder="Search categories..." value="{{ request.GET.search }}">
+            <button type="submit" class="btn btn-primary ms-2">Search</button>
+        </form>
+        <a href="{% url 'addCategory' %}" class="btn btn-success">Add Category</a>
+    </div>
+    
+    <!-- Categories Table -->
+    <table class="table table-hover table-bordered align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>SL No</th>
+                <th>Category Name</th>
+                <th>Action</th>
+                <th>Edit</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for category in categories %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ category.category_name }}</td>
+                    <td>
+                        {% if category.is_active %}
+                            <a href="{% url 'categoryStatus' category.category_id %}" class="btn btn-danger btn-sm btn-action">Unlist</a>
+                        {% else %}
+                            <a href="{% url 'categoryStatus' category.category_id %}" class="btn btn-success btn-sm btn-action">List</a>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'editCategory' category.category_id %}" class="btn btn-warning btn-sm btn-action">Edit</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center">No categories found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <nav aria-label="Page navigation example">
+        <ul class="pagination justify-content-center">
+            {% if categories.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ categories.previous_page_number }}&search={{ request.GET.search }}">Previous</a></li>
+            {% endif %}
+            {% for num in categories.paginator.page_range %}
+                <li class="page-item {% if categories.number == num %}active{% endif %}">
+                    <a class="page-link" href="?page={{ num }}&search={{ request.GET.search }}">{{ num }}</a>
+                </li>
+            {% endfor %}
+            {% if categories.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ categories.next_page_number }}&search={{ request.GET.search }}">Next</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endblock %}

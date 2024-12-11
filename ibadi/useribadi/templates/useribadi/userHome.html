@@ -1,0 +1,103 @@
+{% extends 'useribadi/base.html' %}
+{% load static %}
+
+{% block title %}Home - Ibadi Perfumes{% endblock %}
+
+{% block content %}
+<!-- Banner Section with Carousel -->
+<section id="home">
+    <div id="bannerCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-inner">
+            <div class="carousel-item active">
+                <img src="{% static 'useribadi/images/banner1.webp' %}" class="d-block w-100" alt="Banner 1">
+            </div>
+            <div class="carousel-item">
+                <img src="{% static 'useribadi/images/banner2.webp' %}" class="d-block w-100" alt="Banner 2">
+            </div>
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#bannerCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#bannerCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+        </button>
+    </div>
+</section>
+
+<!-- Categories Section -->
+ 
+<section id="categories" class="py-5">
+    <div class="container">
+        <h3 class="text-center text-warning mb-5">Categories</h3>
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="category-box text-center text-light border-warning">
+                    <a href="#" class="text-decoration-none">
+                        <img src="{% static 'useribadi/images/classicblack.webp' %}" class="card-img-top" alt="Perfumes">
+                        <div class="card-body">
+                            <h5 class="card-title text-warning">Perfumes</h5>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="category-box text-center text-light border-warning">
+                    <a href="#" class="text-decoration-none">
+                        <img src="{% static 'useribadi/images/attarctgry.webp' %}" class="card-img-top" alt="Attar">
+                        <div class="card-body">
+                            <h5 class="card-title text-warning">Attar</h5>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Products Section -->
+<section id="products" class="py-5 bg-dark">
+    <div class="container">
+        <h3 class="text-center text-warning mb-5">Featured Products</h3>
+        <div class="row">
+            {% for product in featured_products %}
+            <div class="col-md-4 mb-4">
+                <div class="card product-card border-warning bg-dark text-center">
+                    <a href="{% url 'productPage' product.id %}" class="text-decoration-none">
+                        <img src="{{ product.imageUrl }}" alt="{{ product.name }}" class="card-img-top">
+                    </a>
+                    <div class="card-body">
+                        <h5 class="card-title text-warning">{{ product.name }}</h5>
+                        <p class="card-text text-light">${{ product.price }}</p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <button class="btn btn-warning">Add to Cart</button>
+                            <button class="btn btn-outline-warning"><i class="fas fa-heart"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- About Us Section -->
+<section id="about" class="py-5">
+    <div class="container">
+        <h3 class="text-center text-warning">About Us</h3>
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <img src="{% static 'useribadi/images/ibadihot2.webp' %}" class="img-fluid" alt="About Us">
+            </div>
+            <div class="col-md-6">
+                <p class="text-light">
+                    Welcome to Ibadi Perfumes! We specialize in crafting luxurious fragrances and attars that leave a
+                    lasting impression. Our goal is to bring you the finest quality products, blending tradition with
+                    modernity.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
