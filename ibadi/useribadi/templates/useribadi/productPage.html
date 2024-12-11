@@ -110,7 +110,7 @@
             </div>
 
             <!-- Quantity Selector -->
-            <div class="mb-4 text-warning">
+            {% comment %} <div class="mb-4 text-warning">
                 <h5 class="text-warning">Quantity</h5>
                 <div class="d-flex align-items-center">
                     <button class="btn btn-warning-outline" id="quantity-decrease">-</button>
@@ -122,13 +122,15 @@
                            disabled>
                     <button class="btn btn-warning-outline" id="quantity-increase">+</button>
                 </div>
-            </div>
+            </div> {% endcomment %}
 
             <!-- Action Buttons -->
             <div class="d-flex gap-3 text-warning">
+                <a href="{% url 'addToCart' product.product_id %}">
                 <button class="btn btn-warning flex-grow-1 fw-bold">
-                    <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                     <i class="fas fa-shopping-cart me-2"></i>Add to Cart
                 </button>
+                </a>
                 <button class="btn btn-warning-outline flex-grow-1 fw-bold">
                     <i class="fas fa-heart me-2"></i>Add to Wishlist
                 </button>

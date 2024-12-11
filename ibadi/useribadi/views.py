@@ -9,6 +9,9 @@ from django.views.decorators.cache import cache_control
 from datetime import datetime,timedelta
 from django.utils.timezone import now,localtime
 from django.utils.crypto import get_random_string
+from django.contrib.auth.decorators import login_required
+from .models import Address,Cart
+
 
 
 
@@ -217,6 +220,122 @@ def productPage(request,product_id):
     images = product.product_images.all()
     mainImage = images.first()
 
-
     related_products = Product.objects.filter(is_active=True,category=product.category).exclude(product_id=product_id)
     return render(request,'useribadi/productPage.html',{'product' : product, 'images' : images, 'mainImage' : mainImage, 'related_products' : related_products})
+
+@login_required
+def userProfile(request):
+    return render(request, 'useribadi/userProfile.html', {'user':request.user})
+
+
+def userAddress(request):
+    addresses = Address.objects.filter(user=request.user)
+    return render(request,'useribadi/userAddress.html', {'addresses':addresses})
+
+
+def addAddress(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        phone = request.POST.get('phone')
+        address = request.POST.get('address')
+        city = request.POST.get('city')
+        pincode = request.POST.get('pincode')
+        landmark = request.POST.get('landmark')
+
+        user = request.user
+        newAddress = Address(user=user, name=name, phone=phone, address=address, city=city, pincode=pincode, landmark=landmark)
+        newAddress.save()
+        messages.success(request, 'Address successfully Added')
+        return redirect('userAddress')
+    return render(request,'useribadi/addAddress.html')
+
+
+
+def editAddress(request,address_id):
+    currentAddress = get_object_or_404(Address, address_id=address_id)
+
+    if request.method == 'POST':
+        if 'update' in request.POST:
+            name = request.POST.get('name')
+            phone = request.POST.get('phone')
+            address = request.POST.get('address')
+            city = request.POST.get('city')
+            pincode = request.POST.get('pincode')
+            landmark = request.POST.get('landmark')
+
+            currentAddress.name = name
+            currentAddress.phone = phone
+            currentAddress.address = address
+            currentAddress.city = city
+            currentAddress.pincode = pincode
+            currentAddress.landmark = landmark
+
+            currentAddress.save()
+            messages.success(request,'Address is updated successfully')
+            return redirect('userAddress')
+    return render(request,'useribadi/editAddress.html',{'currentAddress' : currentAddress})
+
+
+
+def deleteAddress(request,address_id):
+    currentAddess = get_object_or_404(Address,address_id=address_id)
+    currentAddess.delete()
+    messages.error(request,'Address Succesfully Deleted! ')
+    return redirect('userAddress')
+
+
+def addToCart(request, product_id):
+    product = get_object_or_404(Product,product_id=product_id)
+    cartItem, created = Cart.objects.get_or_create(user=request.user, product=product)
+
+    if not created:
+        cartItem.quantity +=1
+        cartItem.save()
+        messages.success(request,f'updated the quantity of {product.product_name} in your cart')
+    else:
+        messages.success(request,f'Added {product.product_name} to your cart')
+    return redirect('productPage',product_id=product_id)
+
+
+
+def myCart(request):
+    cartItems = Cart.objects.filter(user=request.user)
+
+    cartItemwithSubTotal = []
+    for item in cartItems:
+        productSubTotal = item.product.selling_price * item.quantity
+
+        mainImage = item.product.product_images.filter(is_main=True).first()
+
+        cartItemwithSubTotal.append({
+            'id' : item.product.product_id,
+            'product':item.product,
+            'image':mainImage.images.url,
+            'quantity':item.quantity,
+            'subTotal':productSubTotal
+        })
+
+    cartSubTotal = sum(item['subTotal'] for item in cartItemwithSubTotal)
+    deliveryCharge=50 if cartItems.exists() else 0
+    cartTotal = cartSubTotal + deliveryCharge
+
+    return render(request,'useribadi/myCart.html', {
+        'cartItems':cartItemwithSubTotal,
+        'cartSubTotal':cartSubTotal,
+        'deliveryCharge':deliveryCharge,
+        'cartTotal':cartTotal
+        })
+
+
+
+def removeFromCart(request, product_id):
+    product = get_object_or_404(Cart,product_id=product_id, user=request.user)
+    product.delete()
+    messages.error(request,'Item Removed from cart!')
+    return redirect('myCart')
+
+
+
+
+
+

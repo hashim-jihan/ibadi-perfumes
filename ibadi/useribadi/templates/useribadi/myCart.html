@@ -1,0 +1,83 @@
+{% extends 'useribadi/base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <h4 class="text-warning mb-4 text-center">My Cart</h4>
+    <div class="row">
+        <!-- Left Section: Cart Items -->
+        <div class="col-lg-8 mb-4">
+            <div class="bg-dark text-light rounded shadow p-4">
+                <table class="table table-dark table-hover align-middle">
+                    <thead>
+                        <tr class="text-warning">
+                            <th scope="col">Product</th>
+                            <th scope="col">Name</th>
+                            <th scope="col">Variant</th> <!-- Add Variant column -->
+                            <th scope="col">Price</th>
+                            <th scope="col">Quantity</th>
+                            <th scope="col">Subtotal</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in cartItems %}
+                        <tr>
+                            <td><img src="{{ item.image }}" alt="{{ item.product.product_name }}" class="img-thumbnail" style="width: 70px; height: 70px;"></td>
+                            <td>{{ item.product.product_name }}</td>
+                            <td>{{ item.variant }}</td> <!-- Display variant -->
+                            <td>₹{{ item.product.selling_price }}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <button class="btn btn-warning btn-sm me-2" onclick="updateQuantity('{{ item.id }}', 'decrease')">-</button>
+                                    <input type="text" value="{{ item.quantity }}" readonly class="form-control text-center bg-dark text-light border-warning" style="width: 50px;">
+                                    <button class="btn btn-warning btn-sm ms-2" onclick="updateQuantity('{{ item.id }}', 'increase')">+</button>
+                                </div>
+                            </td>
+                            <td>₹{{ item.subTotal }}</td>
+                            <td>
+                                <a href="{% url 'removeFromCart' item.id %}" class="btn btn-danger btn-sm">Remove</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-warning">Your cart is empty!</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Right Section: Cart Summary -->
+        <div class="col-lg-4">
+            <div class="bg-dark text-light rounded shadow p-4">
+                <h5 class="text-warning mb-4">Cart Summary</h5>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Subtotal:</span>
+                    <span>₹{{ cartSubTotal }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Delivery Charge:</span>
+                    <span>₹{{ deliveryCharge }}</span>
+                </div>
+                <hr class="bg-warning">
+                <div class="d-flex justify-content-between mb-4">
+                    <span><strong>Net Total:</strong></span>
+                    <span><strong>₹{{ cartTotal }}</strong></span>
+                </div>
+                <a href="" class="btn btn-warning w-100">Proceed to Checkout</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table td,
+    .table th {
+        vertical-align: middle;
+    }
+    .form-control:focus {
+        box-shadow: 0 0 10px rgba(212, 175, 55, 0.8);
+    }
+</style>
+{% endblock %}

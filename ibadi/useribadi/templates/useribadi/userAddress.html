@@ -1,0 +1,92 @@
+{% extends 'useribadi/base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 mb-4">
+            <div class="bg-dark text-light rounded shadow p-3">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link text-warning py-2" href="{% url 'userProfile' %}" id="profile-link">
+                            <i class="fas fa-user me-2"></i>My Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-warning py-2 active" href="#" id="address-link">
+                            <i class="fas fa-map-marker-alt me-2"></i>Manage Address
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-warning py-2" href="#" id="wishlist-link">
+                            <i class="fas fa-heart me-2"></i>My Wishlist
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link text-warning py-2" href="#" id="cart-link">
+                            <i class="fas fa-shopping-cart"></i> My cart
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link text-warning py-2" href="#" id="orders-link">
+                            <i class="fas fa-shopping-bag me-2"></i>My Orders
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-warning py-2" href="#" id="wallet-link">
+                            <i class="fas fa-wallet me-2"></i>My Wallet
+                        </a>
+                    </li>
+                </ul>
+                <hr class="bg-warning">
+                <a href="#" class="nav-link text-danger py-2">
+                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <div class="bg-dark text-light rounded shadow p-4">
+                <h4 class="text-warning mb-4">Manage Address</h4>
+
+                <!-- Add Address Button -->
+                <div class="d-flex justify-content-end mb-4">
+                    <button class="btn btn-warning" onclick="window.location.href='{% url 'addAddress' %}'">
+                        <i class="fas fa-plus me-2"></i>Add Address
+                    </button>
+                </div>
+
+                <!-- Address Boxes Section -->
+                <div id="address-list" class="row">
+                    {% for address in addresses %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card bg-dark text-light border-warning shadow-sm">
+                                <div class="card-body">
+                                    <p class="mb-2"> {{ address.name }}</p>
+                                    <p class="mb-2"> {{ address.address }}</p>
+                                    <p class="mb-2"> {{ address.city }}</p>
+                                    <p class="mb-2"> {{ address.landmark }}</p>
+                                    <p class="mb-2"> {{ address.pincode }}</p>
+                                    <p class="mb-2"> {{ address.phone }}</p>
+
+                                    <div class="d-flex justify-content-between">
+                                        <a href="{% url 'editAddress' address.address_id %}" class="btn btn-sm btn-warning">Edit</a>
+                                        <a href="{% url 'deleteAddress' address.address_id %}" class="btn btn-sm btn-danger">Delete</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="text-warning">You have no addresses saved.</p>
+                    {% endfor %}
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

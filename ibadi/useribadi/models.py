@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractBaseUser,BaseUserManager
 from django.utils.crypto import get_random_string
 from datetime import datetime,timedelta
 from django.utils.timezone import now
+from adminibadi.models import Product
 
 
 # Create your models here.
@@ -57,6 +58,40 @@ class User(AbstractBaseUser):
         self.otp = get_random_string(6, allowed_chars='0123456789')
         self.otp_created_at = now()
         self.save()
+
+
+
+class Address(models.Model):
+    address_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User,on_delete=models.CASCADE, related_name='addresses')
+    name = models.CharField(max_length=50)
+    phone = models.CharField(max_length=12)
+    address = models.TextField()
+    city = models.CharField(max_length=50)
+    pincode = models.CharField(max_length=6)
+    landmark = models.CharField(max_length=50, null=True, blank=True)
+
+    class Meta:
+        db_table = 'addresses'
+
+    def __str__(self):
+        return f'{self.name}'
+    
+
+class Cart(models.Model):
+    user = models.ForeignKey(User,on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        db_table = 'cart'
+
+    def __str__(self):
+        return f'{self.user.name}'
+    
+    
+
+
 
         
         
