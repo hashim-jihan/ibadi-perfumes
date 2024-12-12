@@ -42,6 +42,14 @@
         color: var(--light-color) !important;
         border-color: var(--yellow-color) !important;
     }
+
+    .btn-check:checked + .btn-warning-outline {
+        background-color: var(--yellow-color);
+        color: var(--dark-color);
+        border-color: var(--dark-color);
+        font-weight: bold;
+        box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.5);
+    }
 </style>
 {% endblock %}
 
@@ -101,36 +109,34 @@
             <div class="mb-4">
                 <h5 class="text-warning">Size</h5>
                 <div class="btn-group " role="group">
-                    <input type="radio" class="btn-check" name="size" id="size50" autocomplete="off">
-                    <label class="btn btn-warning-outline text-warning" for="size50">50 ml</label>
-
-                    <input type="radio" class="btn-check" name="size" id="size100" autocomplete="off">
-                    <label class="btn btn-warning-outline text-warning" for="size100">100 ml</label>
+                    {% for variant in variants %}
+                    <input 
+                        type="radio"
+                        class="btn-check" 
+                        name="variant" 
+                        id="size{{ variant.variant_id }}" 
+                        value="{{ variant.variant_id }}" 
+                        autocomplete="off">
+                    <label class="btn btn-warning-outline text-warning" for="size{{ variant.variant_id }}">{{ variant.variant_name }}</label>
+                    {% endfor %}
                 </div>
             </div>
 
-            <!-- Quantity Selector -->
-            {% comment %} <div class="mb-4 text-warning">
-                <h5 class="text-warning">Quantity</h5>
-                <div class="d-flex align-items-center">
-                    <button class="btn btn-warning-outline" id="quantity-decrease">-</button>
-                    <input type="number" 
-                           class="form-control text-center mx-2 bg-dark text-warning border-warning" 
-                           value="1" 
-                           id="quantity" 
-                           style="width: 80px;" 
-                           disabled>
-                    <button class="btn btn-warning-outline" id="quantity-increase">+</button>
-                </div>
-            </div> {% endcomment %}
-
             <!-- Action Buttons -->
             <div class="d-flex gap-3 text-warning">
-                <a href="{% url 'addToCart' product.product_id %}">
-                <button class="btn btn-warning flex-grow-1 fw-bold">
-                     <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                {% if product.quantity == 0 %}
+                <button class="btn btn-warning flex-grow-1 fw-bold" disabled>
+                    <i class="fas fa-shopping-cart me-2"></i>Add to Cart
                 </button>
-                </a>
+                {% else %}
+                <form action="{% url 'addToCart' product.product_id %}" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="variant_id" id="selectedVariantId" value="">
+                    <button type="submit" class="btn btn-warning flex-grow-1 fw-bold" onclick="selectVariant()">
+                        <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                    </button>
+                </form>
+                {% endif %}
                 <button class="btn btn-warning-outline flex-grow-1 fw-bold">
                     <i class="fas fa-heart me-2"></i>Add to Wishlist
                 </button>
@@ -169,13 +175,13 @@
                 <div class="col-lg-3 col-md-4 col-sm-6">
                     <div class="card shop-product-card bg-dark-custom border border-warning text-warning shadow-sm">
                         {% with related_product.product_images.first as mainImage %}
-                        <a href="{% url 'productPage' related_product.product_id %}">
-                            <img src="{{ mainImage.images.url }}" class="card-img-top" alt="{{ related_product.product_name }}">
+                        <a href="{% url 'productPage' related_product.id %}">
+                            <img src="{{ related_product.relatedImageUrl }}" class="card-img-top" alt="{{ related_product.name }}">
                         </a>
                         {% endwith %}
                         <div class="card-body text-center">
-                            <h5 class="card-title">{{ related_product.product_name }}</h5>
-                            <p class="text-white">₹ {{ related_product.selling_price }}</p>
+                            <h5 class="card-title">{{ related_product.name }}</h5>
+                            <p class="text-white">₹ {{ related_product.price }}</p>
                             <div class="d-flex justify-content-center gap-2 mt-3">
                                 <button class="btn btn-warning btn-sm">Add to Cart</button>
                                 <button class="btn btn-warning-outline btn-sm"><i class="fas fa-heart"></i></button>
@@ -188,27 +194,4 @@
         </div>
     </div>
 </div>
-
-{% block scripts %}
-<script>
-    function changeMainImage(imageUrl) {
-        document.getElementById('mainImage').src = imageUrl;
-    }
-
-    // Quantity control
-    const quantityInput = document.getElementById('quantity');
-    const decreaseBtn = document.getElementById('quantity-decrease');
-    const increaseBtn = document.getElementById('quantity-increase');
-
-    decreaseBtn.addEventListener('click', () => {
-        if (parseInt(quantityInput.value) > 1) {
-            quantityInput.value = parseInt(quantityInput.value) - 1;
-        }
-    });
-
-    increaseBtn.addEventListener('click', () => {
-        quantityInput.value = parseInt(quantityInput.value) + 1;
-    });
-</script>
-{% endblock %}
 {% endblock %}

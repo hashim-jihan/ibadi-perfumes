@@ -137,7 +137,7 @@ def categoryStatus(request, category_id):
 
 
 def productsList(request):
-    products = Product.objects.filter(is_deleted=False).prefetch_related('product_images').select_related('category','variant')
+    products = Product.objects.filter(is_deleted=False).order_by('-created_at').prefetch_related('product_images').select_related('category','variant')
     return render(request,'adminibadi/products.html',{'products' : products})
 
 

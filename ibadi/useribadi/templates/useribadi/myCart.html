@@ -7,44 +7,55 @@
         <!-- Left Section: Cart Items -->
         <div class="col-lg-8 mb-4">
             <div class="bg-dark text-light rounded shadow p-4">
-                <table class="table table-dark table-hover align-middle">
-                    <thead>
-                        <tr class="text-warning">
-                            <th scope="col">Product</th>
-                            <th scope="col">Name</th>
-                            <th scope="col">Variant</th> <!-- Add Variant column -->
-                            <th scope="col">Price</th>
-                            <th scope="col">Quantity</th>
-                            <th scope="col">Subtotal</th>
-                            <th scope="col">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in cartItems %}
-                        <tr>
-                            <td><img src="{{ item.image }}" alt="{{ item.product.product_name }}" class="img-thumbnail" style="width: 70px; height: 70px;"></td>
-                            <td>{{ item.product.product_name }}</td>
-                            <td>{{ item.variant }}</td> <!-- Display variant -->
-                            <td>₹{{ item.product.selling_price }}</td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <button class="btn btn-warning btn-sm me-2" onclick="updateQuantity('{{ item.id }}', 'decrease')">-</button>
-                                    <input type="text" value="{{ item.quantity }}" readonly class="form-control text-center bg-dark text-light border-warning" style="width: 50px;">
-                                    <button class="btn btn-warning btn-sm ms-2" onclick="updateQuantity('{{ item.id }}', 'increase')">+</button>
-                                </div>
-                            </td>
-                            <td>₹{{ item.subTotal }}</td>
-                            <td>
-                                <a href="{% url 'removeFromCart' item.id %}" class="btn btn-danger btn-sm">Remove</a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="7" class="text-center text-warning">Your cart is empty!</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                {% for item in cartItems %}
+                <div class="d-flex flex-column flex-md-row align-items-center mb-4 text-light rounded p-3 border border-secondary product-row">
+                    <!-- Product Image -->
+                    <div class="me-md-4 mb-3 mb-md-0 text-center">
+                        <img src="{{ item.image }}" alt="{{ item.product.product_name }}" class="img-thumbnail" style="width: 100px; height: 100px;">
+                    </div>
+                    
+                    <!-- Product Details -->
+                    <div class="flex-grow-1">
+                        <h6 class="text-warning mb-1">{{ item.product.product_name }}</h6>
+                        <p class="mb-1">
+                            <span>Size: </span>{{ item.variant }}
+                        </p>
+                        <p class="mb-1">
+                            <span>Price: </span>₹{{ item.product.selling_price }}
+                        </p>
+                    </div>
+                    
+                    <!-- Quantity, Subtotal & Remove -->
+                    <div class="text-center ms-md-4">
+                        <!-- Quantity Adjustment -->
+                        <div class="quantity-control">
+                            <button 
+                                class="quantity-btn" 
+                                onclick="updateQuantity('{{ item.id }}', 'decrease')">
+                                -
+                            </button>
+                            <span class="quantity-display">{{ item.quantity }}</span>
+                            <button 
+                                class="quantity-btn" 
+                                onclick="updateQuantity('{{ item.id }}', 'increase')">
+                                +
+                            </button>
+                        </div>
+
+                        <!-- Subtotal -->
+                        <p class="text-warning mb-1 mt-3">
+                            <strong>Subtotal: ₹{{ item.subTotal }}</strong>
+                        </p>
+                        
+                        <!-- Remove Button -->
+                        <a href="{% url 'removeFromCart' item.id %}" class="btn btn-danger btn-sm mt-2" title="Remove Item">
+                            <i class="fas fa-trash-alt"></i> Remove
+                        </a>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-warning">Your cart is empty!</div>
+                {% endfor %}
             </div>
         </div>
 
@@ -72,12 +83,69 @@
 </div>
 
 <style>
-    .table td,
-    .table th {
-        vertical-align: middle;
+    /* Hover Effect for Product Row */
+    .product-row {
+        transition: all 0.3s ease; /* Smooth transition for hover effects */
     }
+    .product-row:hover {
+        background-color: rgba(255, 193, 7, 0.1); /* Subtle yellow background on hover */
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Shadow effect */
+        transform: scale(1.02); /* Slight zoom-in effect */
+    }
+
+    /* Quantity Control */
+    .quantity-control {
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid #ffc107;
+        border-radius: 5px;
+        overflow: hidden;
+        background-color: #343a40;
+    }
+    .quantity-btn {
+        border: none;
+        background-color: #343a40;
+        color: #ffc107;
+        font-size: 1.2rem;
+        width: 40px;
+        height: 40px;
+        text-align: center;
+        line-height: 40px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .quantity-btn:hover {
+        background-color: #ffc107;
+        color: #343a40;
+    }
+    .quantity-display {
+        padding: 0 10px;
+        font-size: 1rem;
+        min-width: 40px;
+        text-align: center;
+        line-height: 40px;
+        background-color: #495057;
+        color: #ffc107;
+        border-left: 1px solid #ffc107;
+        border-right: 1px solid #ffc107;
+    }
+
+    /* Additional Styling */
     .form-control:focus {
         box-shadow: 0 0 10px rgba(212, 175, 55, 0.8);
+    }
+    .img-thumbnail {
+        object-fit: cover;
+        border: 2px solid #ffc107;
+    }
+    .btn-danger .fas {
+        margin-right: 5px;
+    }
+    .d-flex {
+        background-color: transparent !important;
+    }
+    .border-secondary {
+        border-color: rgba(255, 255, 255, 0.2) !important;
     }
 </style>
 {% endblock %}

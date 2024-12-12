@@ -26,6 +26,7 @@ def index(request):
 
 
 
+
 @cache_control(no_store=True, must_revalidate=True, no_cache=True)
 def userSignup(request):
     if request.user.is_authenticated:
@@ -165,27 +166,33 @@ def userLogin(request):
 
 
 
+
 @cache_control(no_store=True, must_revalidate=True, no_cache=True)
 def userHome(request):
     if not request.user.is_authenticated:
         return redirect('userLogin')
 
-    products = Product.objects.filter(is_active=True).prefetch_related('product_images')[:9]
+    products = Product.objects.filter(is_active=True).order_by('-created_at').prefetch_related('product_images')[:9]
     featured_products = []
+    seenProductNames = set()
 
     for product in products:
-        mainImage = product.product_images.filter(is_main=True).first()
-        imageUrl = mainImage.images.url if mainImage else None
-        featured_products.append(
-            {
-             'id':product.product_id,
-             'name':product.product_name,
-             'price':product.selling_price,
-             'imageUrl':imageUrl   
-            }
+        if product.product_name not in seenProductNames:
+            seenProductNames.add(product.product_name)
+            mainImage = product.product_images.filter(is_main=True).first()
+            imageUrl = mainImage.images.url if mainImage else None
+            featured_products.append(
+                {
+                'id':product.product_id,
+                'name':product.product_name,
+                'price':product.selling_price,
+                'imageUrl':imageUrl   
+                }
 
-        )
+            )        
     return render(request,'useribadi/''userHome.html', {'featured_products' : featured_products})
+
+
 
 
 @cache_control(no_store=True, must_revalidate=True, no_cache=True)
@@ -194,22 +201,28 @@ def userLogout(request):
     messages.success(request,'You have been successfuly Logout')
     return redirect('userLogin')
 
+
+
 def shop(request):
     if not request.user.is_authenticated:
         return redirect('userLogin')
     products = Product.objects.filter(is_active=True).prefetch_related('product_images')
     product_list = []
+    seenProductNames = set()
 
     for product in products:
-        mainImage = product.product_images.filter(is_main=True).first()
-        imageUrl = mainImage.images.url if mainImage else None
-        product_list.append({
-            'id' : product.product_id,
-            'name' : product.product_name,
-            'price' : product.selling_price,
-            'imageUrl' : imageUrl
-        })
+        if product.product_name not in seenProductNames:
+            seenProductNames.add(product.product_name)
+            mainImage = product.product_images.filter(is_main=True).first()
+            imageUrl = mainImage.images.url if mainImage else None
+            product_list.append({
+                'id' : product.product_id,
+                'name' : product.product_name,
+                'price' : product.selling_price,
+                'imageUrl' : imageUrl
+            })
     return render(request,'useribadi/shopPage.html',{'product_list' : product_list})
+
 
 
 
@@ -220,17 +233,39 @@ def productPage(request,product_id):
     images = product.product_images.all()
     mainImage = images.first()
 
-    related_products = Product.objects.filter(is_active=True,category=product.category).exclude(product_id=product_id)
-    return render(request,'useribadi/productPage.html',{'product' : product, 'images' : images, 'mainImage' : mainImage, 'related_products' : related_products})
+    variants = ProductVariants.objects.filter(is_active=True)
+
+    products = Product.objects.filter(is_active=True,category=product.category).exclude(product_id=product_id).exclude(product_name=product.product_name)
+    related_products = []
+    seenProductsName = set()
+
+    for related_product in products:
+        if related_product.product_name not in seenProductsName:
+            seenProductsName.add(related_product.product_name)  
+            relatedMainImage = related_product.product_images.filter(is_main=True).first()
+            relatedImageUrl = relatedMainImage.images.url if mainImage else None
+            related_products.append({
+                'id':related_product.product_id,
+                'name' :related_product.product_name,
+                'price' : related_product.selling_price,
+                'relatedImageUrl':relatedImageUrl,
+            })
+    return render(request,'useribadi/productPage.html',{'product' : product, 'images' : images, 'mainImage' : mainImage, 'variants':variants, 'related_products' : related_products})
+
+
 
 @login_required
 def userProfile(request):
     return render(request, 'useribadi/userProfile.html', {'user':request.user})
 
 
+
+
 def userAddress(request):
     addresses = Address.objects.filter(user=request.user)
     return render(request,'useribadi/userAddress.html', {'addresses':addresses})
+
+
 
 
 def addAddress(request):
@@ -248,6 +283,7 @@ def addAddress(request):
         messages.success(request, 'Address successfully Added')
         return redirect('userAddress')
     return render(request,'useribadi/addAddress.html')
+
 
 
 
@@ -284,6 +320,7 @@ def deleteAddress(request,address_id):
     return redirect('userAddress')
 
 
+
 def addToCart(request, product_id):
     product = get_object_or_404(Product,product_id=product_id)
     cartItem, created = Cart.objects.get_or_create(user=request.user, product=product)
@@ -295,6 +332,7 @@ def addToCart(request, product_id):
     else:
         messages.success(request,f'Added {product.product_name} to your cart')
     return redirect('productPage',product_id=product_id)
+
 
 
 
@@ -325,6 +363,7 @@ def myCart(request):
         'deliveryCharge':deliveryCharge,
         'cartTotal':cartTotal
         })
+
 
 
 
