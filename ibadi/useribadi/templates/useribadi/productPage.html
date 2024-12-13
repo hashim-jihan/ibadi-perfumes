@@ -5,7 +5,6 @@
 {% block customCss %}
 {{ block.super }}
 <style>
-    /* Product page specific styles that build upon base styles */
     .bg-dark-custom {
         background-color: var(--secondary-color);
         border: 1px solid var(--yellow-color);
@@ -36,13 +35,6 @@
         transform: scale(1.05);
     }
 
-    /* Ensure dark theme compatibility */
-    .form-control.bg-dark {
-        background-color: var(--dark-color) !important;
-        color: var(--light-color) !important;
-        border-color: var(--yellow-color) !important;
-    }
-
     .btn-check:checked + .btn-warning-outline {
         background-color: var(--yellow-color);
         color: var(--dark-color);
@@ -50,26 +42,36 @@
         font-weight: bold;
         box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.5);
     }
+
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    .action-buttons .btn {
+        flex: 1;
+        padding: 10px 15px;
+    }
+
+    .btn-warning:disabled {
+        opacity: 0.65;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container my-5">
     <div class="row g-5">
-        <!-- Product Images Section -->
         <div class="col-lg-6">
             <div class="row">
                 <div class="col-3 product-image-thumbnails">
-                    <!-- Thumbnail Images -->
                     {% for image in images|slice:":3" %}
                     <img src="{{ image.images.url }}" 
                          class="img-fluid mb-3 rounded border border-warning" 
-                         alt="Thumbnail {{ forloop.counter }}" 
-                         onclick="changeMainImage('{{ image.images.url }}')">
+                         alt="Thumbnail {{ forloop.counter }}">
                     {% endfor %}
                 </div>
                 <div class="col-9">
-                    <!-- Main Image -->
                     {% if mainImage %}
                     <img id="mainImage" 
                          src="{{ mainImage.images.url }}" 
@@ -80,20 +82,18 @@
             </div>
         </div>
 
-        <!-- Product Details -->
         <div class="col-lg-6 bg-dark-custom p-4 rounded">
             <h1 class="fw-bold text-warning">{{ product.product_name }}</h1>
-            <h3 class="text-warning mb-3 text-white">₹ {{ product.selling_price }}</h3>
-            
+            <p class="text-white">{{ product.description }}</p>
+            <h3 class="text-white mb-3">&#8377; {{ product.selling_price }}</h3>
+
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <!-- Stock Status -->
                 {% if product.quantity == 0 %}
                 <span class="badge bg-danger">Out of Stock</span>
                 {% else %}
                 <span class="badge bg-success">In Stock</span>
                 {% endif %}
-                
-                <!-- Rating -->
+
                 <div class="rating">
                     <i class="fas fa-star text-warning"></i>
                     <i class="fas fa-star text-warning"></i>
@@ -103,48 +103,46 @@
                 </div>
             </div>
 
-            {% comment %} <p class="text-muted mb-4">{{ product.description }}</p> {% endcomment %}
-
-            <!-- Size Selector -->
             <div class="mb-4">
                 <h5 class="text-warning">Size</h5>
-                <div class="btn-group " role="group">
-                    {% for variant in variants %}
-                    <input 
-                        type="radio"
-                        class="btn-check" 
-                        name="variant" 
-                        id="size{{ variant.variant_id }}" 
-                        value="{{ variant.variant_id }}" 
-                        autocomplete="off">
-                    <label class="btn btn-warning-outline text-warning" for="size{{ variant.variant_id }}">{{ variant.variant_name }}</label>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="d-flex gap-3 text-warning">
-                {% if product.quantity == 0 %}
-                <button class="btn btn-warning flex-grow-1 fw-bold" disabled>
-                    <i class="fas fa-shopping-cart me-2"></i>Add to Cart
-                </button>
-                {% else %}
-                <form action="{% url 'addToCart' product.product_id %}" method="POST">
-                    {% csrf_token %}
-                    <input type="hidden" name="variant_id" id="selectedVariantId" value="">
-                    <button type="submit" class="btn btn-warning flex-grow-1 fw-bold" onclick="selectVariant()">
-                        <i class="fas fa-shopping-cart me-2"></i>Add to Cart
-                    </button>
+                <form id="variantForm" method="GET">
+                    <div class="btn-group" role="group">
+                        {% for variant in variants %}
+                        <input 
+                            type="radio"
+                            class="btn-check" 
+                            id="size{{ variant.variant_id }}" 
+                            name="variant_selection"  
+                            value="/productPage/{{ product.product_id }}/{{ variant.variant_id }}/"
+                            {% if variant.variant_id == current_variant.variant_id %}checked{% endif %}
+                            onchange="this.form.action=this.value; this.form.submit();">
+                        <label class="btn btn-warning-outline text-warning" for="size{{ variant.variant_id }}">
+                            {{ variant.variant_name }}
+                        </label>
+                        {% endfor %}
+                    </div>
                 </form>
-                {% endif %}
-                <button class="btn btn-warning-outline flex-grow-1 fw-bold">
-                    <i class="fas fa-heart me-2"></i>Add to Wishlist
-                </button>
+
+                <form method="POST" action="{% url 'addToCart' product.product_id %}">
+                    <div class="action-buttons mt-4">
+                        {% if product.quantity == 0 %}
+                        <button class="btn btn-warning fw-bold" disabled>
+                            <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                        </button>
+                        {% else %}
+                        <button type="submit" class="btn btn-warning fw-bold">
+                            <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                        </button>
+                        {% endif %}
+                        <button type="button" class="btn btn-warning-outline fw-bold">
+                            <i class="fas fa-heart me-2"></i>Add to Wishlist
+                        </button>
+                    </div>
+                </form>  
             </div>
         </div>
     </div>
 
-    <!-- Description & Reviews Tabs -->
     <div class="row mt-5">
         <div class="col-12 col-lg-10 mx-auto">
             <ul class="nav nav-tabs" id="product-tabs" role="tablist">
@@ -166,7 +164,6 @@
         </div>
     </div>
 
-    <!-- Related Products -->
     <div class="row mt-5">
         <div class="col-12">
             <h3 class="text-warning mb-4">Related Products</h3>
@@ -175,13 +172,13 @@
                 <div class="col-lg-3 col-md-4 col-sm-6">
                     <div class="card shop-product-card bg-dark-custom border border-warning text-warning shadow-sm">
                         {% with related_product.product_images.first as mainImage %}
-                        <a href="{% url 'productPage' related_product.id %}">
+                        <a href="{% url 'productPage' related_product.id related_product.variant_id %}">
                             <img src="{{ related_product.relatedImageUrl }}" class="card-img-top" alt="{{ related_product.name }}">
                         </a>
                         {% endwith %}
                         <div class="card-body text-center">
                             <h5 class="card-title">{{ related_product.name }}</h5>
-                            <p class="text-white">₹ {{ related_product.price }}</p>
+                            <p class="text-white">&#8377; {{ related_product.price }}</p>
                             <div class="d-flex justify-content-center gap-2 mt-3">
                                 <button class="btn btn-warning btn-sm">Add to Cart</button>
                                 <button class="btn btn-warning-outline btn-sm"><i class="fas fa-heart"></i></button>
@@ -194,4 +191,6 @@
         </div>
     </div>
 </div>
+
 {% endblock %}
+

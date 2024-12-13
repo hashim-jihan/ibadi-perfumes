@@ -18,7 +18,12 @@
                     <div class="flex-grow-1">
                         <h6 class="text-warning mb-1">{{ item.product.product_name }}</h6>
                         <p class="mb-1">
-                            <span>Size: </span>{{ item.variant }}
+                            <span>Size: </span>
+                            {% if item.variant %}
+                                {{ item.variant.variant_name }}
+                            {% else %}
+                                Not Specified
+                            {% endif %}
                         </p>
                         <p class="mb-1">
                             <span>Price: </span>₹{{ item.product.selling_price }}

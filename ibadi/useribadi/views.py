@@ -10,6 +10,7 @@ from datetime import datetime,timedelta
 from django.utils.timezone import now,localtime
 from django.utils.crypto import get_random_string
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 from .models import Address,Cart
 
 
@@ -172,7 +173,7 @@ def userHome(request):
     if not request.user.is_authenticated:
         return redirect('userLogin')
 
-    products = Product.objects.filter(is_active=True).order_by('-created_at').prefetch_related('product_images')[:9]
+    products = Product.objects.filter(is_active=True,variant_id=1).order_by('-created_at').prefetch_related('product_images')[:9]
     featured_products = []
     seenProductNames = set()
 
@@ -206,7 +207,7 @@ def userLogout(request):
 def shop(request):
     if not request.user.is_authenticated:
         return redirect('userLogin')
-    products = Product.objects.filter(is_active=True).prefetch_related('product_images')
+    products = Product.objects.filter(is_active=True,variant_id=1).prefetch_related('product_images')
     product_list = []
     seenProductNames = set()
 
@@ -219,17 +220,19 @@ def shop(request):
                 'id' : product.product_id,
                 'name' : product.product_name,
                 'price' : product.selling_price,
-                'imageUrl' : imageUrl
+                'imageUrl' : imageUrl,
+                'variant_id':product.variant.variant_id
             })
     return render(request,'useribadi/shopPage.html',{'product_list' : product_list})
 
 
 
-
-def productPage(request,product_id):
+@csrf_exempt
+def productPage(request,product_id,variant_id):
     if not request.user.is_authenticated:
         return redirect('userLogin')
-    product = get_object_or_404(Product, product_id=product_id)
+    
+    product = get_object_or_404(Product, product_id=product_id,variant_id=variant_id)
     images = product.product_images.all()
     mainImage = images.first()
 
@@ -249,6 +252,7 @@ def productPage(request,product_id):
                 'name' :related_product.product_name,
                 'price' : related_product.selling_price,
                 'relatedImageUrl':relatedImageUrl,
+                'variant_id':1
             })
     return render(request,'useribadi/productPage.html',{'product' : product, 'images' : images, 'mainImage' : mainImage, 'variants':variants, 'related_products' : related_products})
 
@@ -320,10 +324,11 @@ def deleteAddress(request,address_id):
     return redirect('userAddress')
 
 
-
+@csrf_exempt
 def addToCart(request, product_id):
     product = get_object_or_404(Product,product_id=product_id)
-    cartItem, created = Cart.objects.get_or_create(user=request.user, product=product)
+ 
+    cartItem, created = Cart.objects.get_or_create(user=request.user,product_id=product_id)
 
     if not created:
         cartItem.quantity +=1
@@ -345,12 +350,16 @@ def myCart(request):
 
         mainImage = item.product.product_images.filter(is_main=True).first()
 
+        variant = None
+        if hasattr(item.product, 'variant'):
+            variant = item.product.variant
         cartItemwithSubTotal.append({
             'id' : item.product.product_id,
             'product':item.product,
             'image':mainImage.images.url,
             'quantity':item.quantity,
-            'subTotal':productSubTotal
+            'subTotal':productSubTotal,
+            'variant':variant
         })
 
     cartSubTotal = sum(item['subTotal'] for item in cartItemwithSubTotal)

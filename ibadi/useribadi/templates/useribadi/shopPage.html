@@ -48,7 +48,7 @@
                 <div class="col">
                     <div class="card shop-product-card bg-dark text-warning border-warning shadow-sm mb-4">
                         {% if product.imageUrl %}
-                        <a href="{% url 'productPage' product.id %}">
+                        <a href="{% url 'productPage' product.id product.variant_id %}">
                             <img src="{{ product.imageUrl }}" class="card-img-top" alt="{{ product.name }}">
                         </a>
                         {% endif %}
