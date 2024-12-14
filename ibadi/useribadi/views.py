@@ -187,7 +187,8 @@ def userHome(request):
                 'id':product.product_id,
                 'name':product.product_name,
                 'price':product.selling_price,
-                'imageUrl':imageUrl   
+                'imageUrl':imageUrl,
+                'variant_id':product.variant_id
                 }
 
             )        
@@ -226,35 +227,75 @@ def shop(request):
     return render(request,'useribadi/shopPage.html',{'product_list' : product_list})
 
 
-
-@csrf_exempt
-def productPage(request,product_id,variant_id):
+def productPage(request, product_id, variant_id):
+    # Ensure user authentication
     if not request.user.is_authenticated:
         return redirect('userLogin')
-    
-    product = get_object_or_404(Product, product_id=product_id,variant_id=variant_id)
+
+    # Fetch the product with the specific product_id and variant_id
+    product = get_object_or_404(Product, product_id=product_id, variant_id=variant_id, is_active=True)
     images = product.product_images.all()
-    mainImage = images.first()
+    mainImage = images.filter(is_main=True).first()
 
-    variants = ProductVariants.objects.filter(is_active=True)
+    # Fetch all variants of this product's name
+    variants = Product.objects.filter(product_name=product.product_name, is_active=True)
 
-    products = Product.objects.filter(is_active=True,category=product.category).exclude(product_id=product_id).exclude(product_name=product.product_name)
+    # Related products excluding the current product
+    products = Product.objects.filter(category=product.category, is_active=True).exclude(product_id=product_id).exclude(product_name=product.product_name)
+
     related_products = []
     seenProductsName = set()
 
     for related_product in products:
         if related_product.product_name not in seenProductsName:
-            seenProductsName.add(related_product.product_name)  
+            seenProductsName.add(related_product.product_name)
             relatedMainImage = related_product.product_images.filter(is_main=True).first()
-            relatedImageUrl = relatedMainImage.images.url if mainImage else None
+            relatedImageUrl = relatedMainImage.images.url if relatedMainImage else None
             related_products.append({
                 'id':related_product.product_id,
-                'name' :related_product.product_name,
-                'price' : related_product.selling_price,
+                'name':related_product.product_name,
+                'price':related_product.selling_price,
                 'relatedImageUrl':relatedImageUrl,
                 'variant_id':1
             })
-    return render(request,'useribadi/productPage.html',{'product' : product, 'images' : images, 'mainImage' : mainImage, 'variants':variants, 'related_products' : related_products})
+    return render(request, 'useribadi/productPage.html', {
+        'product': product,
+        'images': images,
+        'mainImage': mainImage,
+        'variants': variants,
+        'related_products': related_products,
+    })
+
+
+# @csrf_exempt
+# def productPage(request,product_id,variant_id):
+#     if not request.user.is_authenticated:
+#         return redirect('userLogin')
+    
+#     product = get_object_or_404(Product, product_id=product_id,variant_id=variant_id)
+#     images = product.product_images.all()
+#     mainImage = images.first()
+
+#     variants = ProductVariants.objects.filter(is_active=True)
+#     print(variants)
+
+#     products = Product.objects.filter(is_active=True,category=product.category).exclude(product_id=product_id).exclude(product_name=product.product_name)
+#     related_products = []
+#     seenProductsName = set()
+
+#     for related_product in products:
+#         if related_product.product_name not in seenProductsName:
+#             seenProductsName.add(related_product.product_name)  
+#             relatedMainImage = related_product.product_images.filter(is_main=True).first()
+#             relatedImageUrl = relatedMainImage.images.url if mainImage else None
+#             related_products.append({
+#                 'id':related_product.product_id,
+#                 'name' :related_product.product_name,
+#                 'price' : related_product.selling_price,
+#                 'relatedImageUrl':relatedImageUrl,
+#                 'variant_id':1
+#             })
+#     return render(request,'useribadi/productPage.html',{'product' : product, 'images' : images, 'mainImage' : mainImage, 'variants':variants, 'related_products' : related_products})
 
 
 

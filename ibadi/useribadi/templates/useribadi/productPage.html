@@ -9,188 +9,238 @@
         background-color: var(--secondary-color);
         border: 1px solid var(--yellow-color);
     }
-
     .btn-warning-outline {
         color: var(--yellow-color);
         border-color: var(--yellow-color);
         background-color: transparent;
     }
-
     .btn-warning-outline:hover {
         background-color: var(--yellow-color);
         color: var(--dark-color);
     }
-
-    .product-image-thumbnails {
-        max-height: 400px;
-        overflow-y: auto;
+    .related-product-card {
+        transition: transform 0.3s ease-in-out;
     }
-
-    .product-image-thumbnails img {
-        cursor: pointer;
-        transition: transform 0.3s ease;
-    }
-
-    .product-image-thumbnails img:hover {
+    .related-product-card:hover {
         transform: scale(1.05);
     }
-
-    .btn-check:checked + .btn-warning-outline {
+    .thumbnail-image {
+        cursor: pointer;
+        transition: opacity 0.3s ease-in-out;
+    }
+    .thumbnail-image:hover {
+        opacity: 0.7;
+    }
+    .product-section {
+        background-color: var(--secondary-color);
+        border: 1px solid var(--yellow-color);
+        border-radius: 0.5rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    .product-title {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+    .product-price {
+        font-size: 1.8rem;
+        margin-bottom: 1.5rem;
+    }
+    .product-description {
+        font-size: 1rem;
+        line-height: 1.6;
+        margin-bottom: 2rem;
+    }
+    .action-buttons .btn {
+        width: 100%;
+    }
+    .tab-button {
+        background-color: transparent;
+        color: var(--yellow-color);
+        border: 1px solid var(--yellow-color);
+        padding: 0.5rem 1rem;
+        margin: 0 0.5rem;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        transition: background-color 0.3s, color 0.3s;
+    }
+    .tab-button.active {
         background-color: var(--yellow-color);
         color: var(--dark-color);
-        border-color: var(--dark-color);
-        font-weight: bold;
-        box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.5);
     }
-
-    .action-buttons {
-        display: flex;
-        gap: 10px;
+    .tab-content {
+        display: none;
     }
-
-    .action-buttons .btn {
-        flex: 1;
-        padding: 10px 15px;
-    }
-
-    .btn-warning:disabled {
-        opacity: 0.65;
+    .tab-content.active {
+        display: block;
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container my-5">
-    <div class="row g-5">
+    <div class="row g-4">
+        <!-- Product Images -->
         <div class="col-lg-6">
-            <div class="row">
-                <div class="col-3 product-image-thumbnails">
-                    {% for image in images|slice:":3" %}
-                    <img src="{{ image.images.url }}" 
-                         class="img-fluid mb-3 rounded border border-warning" 
-                         alt="Thumbnail {{ forloop.counter }}">
-                    {% endfor %}
-                </div>
-                <div class="col-9">
-                    {% if mainImage %}
-                    <img id="mainImage" 
-                         src="{{ mainImage.images.url }}" 
-                         class="img-fluid rounded shadow-lg" 
-                         alt="{{ product.product_name }}">
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-6 bg-dark-custom p-4 rounded">
-            <h1 class="fw-bold text-warning">{{ product.product_name }}</h1>
-            <p class="text-white">{{ product.description }}</p>
-            <h3 class="text-white mb-3">&#8377; {{ product.selling_price }}</h3>
-
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                {% if product.quantity == 0 %}
-                <span class="badge bg-danger">Out of Stock</span>
-                {% else %}
-                <span class="badge bg-success">In Stock</span>
-                {% endif %}
-
-                <div class="rating">
-                    <i class="fas fa-star text-warning"></i>
-                    <i class="fas fa-star text-warning"></i>
-                    <i class="fas fa-star text-warning"></i>
-                    <i class="fas fa-star-half-alt text-warning"></i>
-                    <i class="far fa-star text-warning"></i>
-                </div>
-            </div>
-
-            <div class="mb-4">
-                <h5 class="text-warning">Size</h5>
-                <form id="variantForm" method="GET">
-                    <div class="btn-group" role="group">
-                        {% for variant in variants %}
-                        <input 
-                            type="radio"
-                            class="btn-check" 
-                            id="size{{ variant.variant_id }}" 
-                            name="variant_selection"  
-                            value="/productPage/{{ product.product_id }}/{{ variant.variant_id }}/"
-                            {% if variant.variant_id == current_variant.variant_id %}checked{% endif %}
-                            onchange="this.form.action=this.value; this.form.submit();">
-                        <label class="btn btn-warning-outline text-warning" for="size{{ variant.variant_id }}">
-                            {{ variant.variant_name }}
-                        </label>
+            <div class="product-section">
+                <div class="row">
+                    <div class="col-3">
+                        {% for image in images %}
+                        <img src="{{ image.images.url }}" 
+                             class="img-fluid mb-3 rounded border border-warning thumbnail-image" 
+                             alt="Thumbnail"
+                             onclick="changeMainImage('{{ image.images.url }}')">
                         {% endfor %}
                     </div>
-                </form>
-
-                <form method="POST" action="{% url 'addToCart' product.product_id %}">
-                    <div class="action-buttons mt-4">
-                        {% if product.quantity == 0 %}
-                        <button class="btn btn-warning fw-bold" disabled>
-                            <i class="fas fa-shopping-cart me-2"></i>Add to Cart
-                        </button>
-                        {% else %}
-                        <button type="submit" class="btn btn-warning fw-bold">
-                            <i class="fas fa-shopping-cart me-2"></i>Add to Cart
-                        </button>
+                    <div class="col-9">
+                        {% if mainImage %}
+                        <img id="mainImage" 
+                             src="{{ mainImage.images.url }}" 
+                             class="img-fluid rounded shadow-lg" 
+                             alt="{{ product.product_name }}">
                         {% endif %}
-                        <button type="button" class="btn btn-warning-outline fw-bold">
-                            <i class="fas fa-heart me-2"></i>Add to Wishlist
-                        </button>
                     </div>
-                </form>  
-            </div>
-        </div>
-    </div>
-
-    <div class="row mt-5">
-        <div class="col-12 col-lg-10 mx-auto">
-            <ul class="nav nav-tabs" id="product-tabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active text-warning" id="description-tab" data-bs-toggle="tab" data-bs-target="#description" type="button" role="tab">Description</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link text-warning" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button" role="tab">Reviews</button>
-                </li>
-            </ul>
-            <div class="tab-content mt-4 bg-dark-custom p-4 rounded">
-                <div class="tab-pane fade show active" id="description" role="tabpanel">
-                    <p>{{ product.description }}</p>
-                </div>
-                <div class="tab-pane fade" id="reviews" role="tabpanel">
-                    <p>No reviews yet. Be the first to review this product!</p>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="row mt-5">
-        <div class="col-12">
-            <h3 class="text-warning mb-4">Related Products</h3>
-            <div class="row g-4">
-                {% for related_product in related_products %}
-                <div class="col-lg-3 col-md-4 col-sm-6">
-                    <div class="card shop-product-card bg-dark-custom border border-warning text-warning shadow-sm">
-                        {% with related_product.product_images.first as mainImage %}
-                        <a href="{% url 'productPage' related_product.id related_product.variant_id %}">
-                            <img src="{{ related_product.relatedImageUrl }}" class="card-img-top" alt="{{ related_product.name }}">
-                        </a>
-                        {% endwith %}
-                        <div class="card-body text-center">
-                            <h5 class="card-title">{{ related_product.name }}</h5>
-                            <p class="text-white">&#8377; {{ related_product.price }}</p>
-                            <div class="d-flex justify-content-center gap-2 mt-3">
-                                <button class="btn btn-warning btn-sm">Add to Cart</button>
-                                <button class="btn btn-warning-outline btn-sm"><i class="fas fa-heart"></i></button>
-                            </div>
+        <!-- Product Details -->
+        <div class="col-lg-6">
+            <div class="product-section">
+                <h1 class="product-title fw-bold text-warning">{{ product.product_name }}</h1>
+                <h3 class="product-price text-white">&#8377; {{ product.selling_price }}</h3>
+                <p class="product-description text-white">{{ product.short_description }}</p>
+
+                <!-- Variant Selection -->
+                <div class="mb-4">
+                    <h5 class="text-warning mb-3">Select Variant</h5>
+                    <form id="variantForm">
+                        <div class="btn-group w-100" role="group">
+                            {% for variant in variants %}
+                            <input 
+                                type="radio" 
+                                class="btn-check" 
+                                id="variant{{ variant.variant_id }}" 
+                                name="variant_selection" 
+                                value="{% url 'productPage' variant.product_id variant.variant_id %}" 
+                                {% if variant.variant_id == product.variant.variant_id %}checked{% endif %}
+                                onchange="updateProductPage(this.value)">
+                            <label class="btn btn-warning-outline text-warning" for="variant{{ variant.variant_id }}">
+                                {{ variant.variant.variant_name }}
+                            </label>
+                            {% endfor %}
                         </div>
+                    </form>
+                </div>
+
+                <!-- Add to Cart and Wishlist -->
+                <div class="action-buttons row g-2">
+                    <div class="col-6">
+                        <form method="POST" action="{% url 'addToCart' product.product_id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-warning fw-bold">
+                                <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                            </button>
+                        </form>
                     </div>
+                    <div class="col-6">
+                        <form method="POST" action="">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-warning">
+                                <i class="fas fa-heart me-2"></i>Add to Wishlist
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Description and Reviews Section -->
+    <div class="product-section mt-5">
+        <div class="text-center mb-4">
+            <button class="tab-button active" onclick="showTab('description')">Description</button>
+            <button class="tab-button" onclick="showTab('reviews')">Reviews</button>
+        </div>
+        <div id="description" class="tab-content active">
+            <h3 class="text-warning mb-3">Product Description</h3>
+            <p class="text-white">{{ product.description }}</p>
+        </div>
+        <div id="reviews" class="tab-content">
+            <h3 class="text-warning mb-3">Customer Reviews</h3>
+            {% if reviews %}
+                {% for review in reviews %}
+                <div class="mb-4">
+                    <h5 class="text-warning">{{ review.user.username }}</h5>
+                    <div class="text-white">
+                        {% for i in review.rating|ljust:5 %}
+                            {% if i == '1' %}
+                                <i class="fas fa-star text-warning"></i>
+                            {% else %}
+                                <i class="far fa-star text-warning"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <p class="text-white mt-2">{{ review.comment }}</p>
                 </div>
                 {% endfor %}
+            {% else %}
+                <p class="text-white">No reviews yet. Be the first to review this product!</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Related Products -->
+    <div class="product-section mt-5">
+        <h3 class="text-warning mb-4">Related Products</h3>
+        <div class="row g-4">
+            {% for related_product in related_products %}
+            <div class="col-md-3">
+                <div class="card bg-dark-custom h-100 text-center border border-warning related-product-card">
+                    <a href="{% url 'productPage' related_product.id related_product.variant_id %}">
+                        <img src="{{ related_product.relatedImageUrl }}" 
+                             class="card-img-top" 
+                             alt="{{ related_product.name }}">
+                    </a>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title text-warning">{{ related_product.name }}</h5>
+                        <p class="text-white mt-auto">&#8377; {{ related_product.price }}</p>
+                    </div>
+                </div>
             </div>
+            {% endfor %}
         </div>
     </div>
 </div>
 
+<script>
+    function updateProductPage(url) {
+        window.location.href = url; // Redirect to the selected variant's URL
+    }
+
+    function changeMainImage(imageUrl) {
+        document.getElementById('mainImage').src = imageUrl;
+    }
+
+    function showTab(tabName) {
+        // Hide all tab contents
+        var tabContents = document.getElementsByClassName('tab-content');
+        for (var i = 0; i < tabContents.length; i++) {
+            tabContents[i].classList.remove('active');
+        }
+
+        // Deactivate all tab buttons
+        var tabButtons = document.getElementsByClassName('tab-button');
+        for (var i = 0; i < tabButtons.length; i++) {
+            tabButtons[i].classList.remove('active');
+        }
+
+        // Show the selected tab content
+        document.getElementById(tabName).classList.add('active');
+
+        // Activate the clicked tab button
+        event.currentTarget.classList.add('active');
+    }
+</script>
 {% endblock %}
 

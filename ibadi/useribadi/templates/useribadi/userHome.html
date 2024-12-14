@@ -64,7 +64,7 @@
             {% for product in featured_products %}
             <div class="col-md-4 mb-4">
                 <div class="card product-card border-warning bg-dark text-center">
-                    <a href="{% url 'productPage' product.id %}" class="text-decoration-none">
+                    <a href="{% url 'productPage' product.id product.variant_id %}" class="text-decoration-none">
                         <img src="{{ product.imageUrl }}" alt="{{ product.name }}" class="card-img-top">
                     </a>
                     <div class="card-body">
