@@ -1,0 +1,111 @@
+{% extends 'useribadi/base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <h4 class="text-warning mb-4 text-center">Checkout</h4>
+    <div class="row">
+        <!-- Left Section -->
+        <div class="col-lg-7">
+            <!-- Payment Methods -->
+            <div class="bg-dark text-light rounded shadow p-4 mb-4">
+                <h5 class="text-warning mb-3">Payment Methods</h5>
+                <form>
+                    <div class="form-check mb-2">
+                        <input type="radio" class="form-check-input" name="paymentMethod" id="netBanking" value="Net Banking">
+                        <label class="form-check-label" for="netBanking">Net Banking</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input type="radio" class="form-check-input" name="paymentMethod" id="upi" value="UPI">
+                        <label class="form-check-label" for="upi">UPI</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input type="radio" class="form-check-input" name="paymentMethod" id="cashOnDelivery" value="Cash on Delivery">
+                        <label class="form-check-label" for="cashOnDelivery">Cash on Delivery</label>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Address Section -->
+            <div class="bg-dark text-light rounded shadow p-4">
+                <h5 class="text-warning mb-3">Delivery Address</h5>
+                <p id="currentAddress">1234 Street Name, City, State, Zip Code</p>
+                <button class="btn btn-warning btn-sm">Change Address</button>
+            </div>
+        </div>
+
+        <!-- Right Section: Order Summary -->
+        <div class="col-lg-5">
+            <div class="bg-dark text-light rounded shadow p-4">
+                <h5 class="text-warning mb-4">Order Summary</h5>
+                {% for item in cartItems %}
+                <div class="d-flex align-items-center mb-3">
+                    <!-- Product Image -->
+                    <div class="me-3">
+                        <img src="{{ item.image }}" alt="{{ item.product.product_name }}" class="img-thumbnail"
+                             style="width: 80px; height: 80px; object-fit: cover;">
+                    </div>
+                    <!-- Product Details -->
+                    <div class="flex-grow-1">
+                        <h6 class="text-warning mb-0">{{ item.product.product_name }}</h6>
+                        <small>Quantity: {{ item.quantity }}</small>
+                        {% if item.variant %}
+                        <small class="d-block">Size: {{ item.variant.variant_name }}</small>
+                        {% endif %}
+                    </div>
+                    <!-- Subtotal -->
+                    <div>₹{{ item.subtotal }}</div>
+                </div>
+                <hr class="bg-secondary">
+                {% endfor %}
+                
+                <!-- Subtotal and Total -->
+                <div class="d-flex justify-content-between">
+                    <span>Subtotal:</span>
+                    <span>₹{{ cartSubTotal }}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Delivery Charge:</span>
+                    <span>₹{{ deliveryCharge }}</span>
+                </div>
+                <hr class="bg-warning">
+                <div class="d-flex justify-content-between mb-4">
+                    <span><strong>Total Amount:</strong></span>
+                    <span><strong>₹{{ cartTotal }}</strong></span>
+                </div>
+                <button class="btn btn-warning w-100">Place Order</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Shared Styling */
+    .bg-dark {
+        background-color: #343a40 !important;
+    }
+    .text-warning {
+        color: #ffc107 !important;
+    }
+    .form-check-input:checked {
+        background-color: #ffc107;
+        border-color: #ffc107;
+    }
+    .btn-warning {
+        background-color: #ffc107;
+        border: none;
+    }
+    .btn-warning:hover {
+        background-color: #d39e00;
+    }
+    .rounded {
+        border-radius: 0.5rem;
+    }
+    .shadow {
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    .img-thumbnail {
+        border: 2px solid #ffc107;
+        border-radius: 5px;
+    }
+</style>
+{% endblock %}

@@ -228,19 +228,16 @@ def shop(request):
 
 
 def productPage(request, product_id, variant_id):
-    # Ensure user authentication
+
     if not request.user.is_authenticated:
         return redirect('userLogin')
 
-    # Fetch the product with the specific product_id and variant_id
     product = get_object_or_404(Product, product_id=product_id, variant_id=variant_id, is_active=True)
     images = product.product_images.all()
     mainImage = images.filter(is_main=True).first()
 
-    # Fetch all variants of this product's name
     variants = Product.objects.filter(product_name=product.product_name, is_active=True)
 
-    # Related products excluding the current product
     products = Product.objects.filter(category=product.category, is_active=True).exclude(product_id=product_id).exclude(product_name=product.product_name)
 
     related_products = []
@@ -267,49 +264,15 @@ def productPage(request, product_id, variant_id):
     })
 
 
-# @csrf_exempt
-# def productPage(request,product_id,variant_id):
-#     if not request.user.is_authenticated:
-#         return redirect('userLogin')
-    
-#     product = get_object_or_404(Product, product_id=product_id,variant_id=variant_id)
-#     images = product.product_images.all()
-#     mainImage = images.first()
-
-#     variants = ProductVariants.objects.filter(is_active=True)
-#     print(variants)
-
-#     products = Product.objects.filter(is_active=True,category=product.category).exclude(product_id=product_id).exclude(product_name=product.product_name)
-#     related_products = []
-#     seenProductsName = set()
-
-#     for related_product in products:
-#         if related_product.product_name not in seenProductsName:
-#             seenProductsName.add(related_product.product_name)  
-#             relatedMainImage = related_product.product_images.filter(is_main=True).first()
-#             relatedImageUrl = relatedMainImage.images.url if mainImage else None
-#             related_products.append({
-#                 'id':related_product.product_id,
-#                 'name' :related_product.product_name,
-#                 'price' : related_product.selling_price,
-#                 'relatedImageUrl':relatedImageUrl,
-#                 'variant_id':1
-#             })
-#     return render(request,'useribadi/productPage.html',{'product' : product, 'images' : images, 'mainImage' : mainImage, 'variants':variants, 'related_products' : related_products})
-
-
-
 @login_required
 def userProfile(request):
     return render(request, 'useribadi/userProfile.html', {'user':request.user})
 
 
 
-
 def userAddress(request):
     addresses = Address.objects.filter(user=request.user)
     return render(request,'useribadi/userAddress.html', {'addresses':addresses})
-
 
 
 
@@ -365,19 +328,28 @@ def deleteAddress(request,address_id):
     return redirect('userAddress')
 
 
+
 @csrf_exempt
 def addToCart(request, product_id):
-    product = get_object_or_404(Product,product_id=product_id)
+    variant_id = request.POST.get('variant_id')
+    product = get_object_or_404(Product,product_id=product_id,variant_id=variant_id)
  
     cartItem, created = Cart.objects.get_or_create(user=request.user,product_id=product_id)
+    maxQuantity = 5
 
     if not created:
-        cartItem.quantity +=1
-        cartItem.save()
-        messages.success(request,f'updated the quantity of {product.product_name} in your cart')
+        if cartItem.quantity >= maxQuantity:
+            messages.error(request, f'You can only add up to {maxQuantity} of {product.product_name}')
+        else:
+            cartItem.quantity +=1
+            cartItem.save()
+            messages.success(request,f'updated the quantity of {product.product_name} in your cart')
     else:
+        cartItem.quantity = 1
+        cartItem.save()
         messages.success(request,f'Added {product.product_name} to your cart')
-    return redirect('productPage',product_id=product_id)
+
+    return redirect('productPage',product_id=product_id,variant_id=variant_id)
 
 
 
@@ -416,12 +388,69 @@ def myCart(request):
 
 
 
+def updateCartQuantity(request, product_id):
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        cartItem = get_object_or_404(Cart,product__product_id=product_id, user=request.user)
+
+        maxQuantity = 5
+        availableQuantity = cartItem.product.quantity
+
+        if action == 'increase':
+            if cartItem.quantity >= maxQuantity:
+                messages.error(request,f'you can only add up to {maxQuantity} of {cartItem.product.product_name}')
+            elif cartItem.quantity + 1 > availableQuantity:
+                messages.error(request,f'only {availableQuantity} of {cartItem.product.product_name} is available in stock')  
+            else:
+                cartItem.quantity +=1
+                cartItem.save()
+    
+        elif action == 'decrease' and cartItem.quantity > 1:
+            cartItem.quantity -=1
+            cartItem.save()
+        
+        return redirect('myCart')
+
+
 
 def removeFromCart(request, product_id):
     product = get_object_or_404(Cart,product_id=product_id, user=request.user)
     product.delete()
     messages.error(request,'Item Removed from cart!')
     return redirect('myCart')
+
+
+def checkoutPage(request):
+
+    cartItems = Cart.objects.filter(user=request.user)
+    cartItemWithSubTotal = []
+
+    for item in cartItems:
+        productSubTotal = item.product.selling_price * item.quantity
+        mainImage = item.product.product_images.filter(is_main=True).first()
+
+        variant = None
+        if hasattr(item.product,'variant'):
+            variant = item.product.variant
+        
+        cartItemWithSubTotal.append({
+            'id':item.product.product_id,
+            'product':item.product,
+            'image':mainImage.images.url,
+            'quantity':item.quantity,
+            'subtotal':productSubTotal,
+            'variant':variant
+        })
+
+        cartSubTotal = sum(item['subtotal'] for item in cartItemWithSubTotal)
+        deliveryCharge = 50 if cartItems.exists() else 0
+        cartTotal = cartSubTotal + deliveryCharge 
+    return render(request,'useribadi/checkout.html', {
+        'cartItems':cartItemWithSubTotal,
+        'cartSubTotal':cartSubTotal,
+        'deliveryCharge':deliveryCharge,
+        'cartTotal':cartTotal
+    })
 
 
 

@@ -33,19 +33,18 @@
                     <!-- Quantity, Subtotal & Remove -->
                     <div class="text-center ms-md-4">
                         <!-- Quantity Adjustment -->
-                        <div class="quantity-control">
-                            <button 
-                                class="quantity-btn" 
-                                onclick="updateQuantity('{{ item.id }}', 'decrease')">
-                                -
-                            </button>
-                            <span class="quantity-display">{{ item.quantity }}</span>
-                            <button 
-                                class="quantity-btn" 
-                                onclick="updateQuantity('{{ item.id }}', 'increase')">
-                                +
-                            </button>
-                        </div>
+                        <form method="post" action="{% url 'updateCartQuantity' item.id %}">
+                            {% csrf_token %}
+                            <div class="quantity-control">
+                                <button type="submit" name="action" value="decrease" class="quantity-btn">
+                                    -
+                                </button>
+                                <span class="quantity-display">{{ item.quantity }}</span>
+                                <button type="submit" name="action" value="increase" class="quantity-btn">
+                                    +
+                                </button>
+                            </div>
+                        </form>
 
                         <!-- Subtotal -->
                         <p class="text-warning mb-1 mt-3">
@@ -81,7 +80,7 @@
                     <span><strong>Net Total:</strong></span>
                     <span><strong>₹{{ cartTotal }}</strong></span>
                 </div>
-                <a href="" class="btn btn-warning w-100">Proceed to Checkout</a>
+                <a href="{% url 'checkoutPage' %}" class="btn btn-warning w-100">Proceed to Checkout</a>
             </div>
         </div>
     </div>

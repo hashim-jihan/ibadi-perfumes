@@ -74,6 +74,14 @@
     .tab-content.active {
         display: block;
     }
+
+    .stock-status {
+        font-size: 0.8rem;
+        font-weight: 600; 
+        padding: 0.3rem 0.6rem; 
+        border-radius: 0.25rem; 
+        text-transform: uppercase; 
+    }
 </style>
 {% endblock %}
 
@@ -109,6 +117,20 @@
             <div class="product-section">
                 <h1 class="product-title fw-bold text-warning">{{ product.product_name }}</h1>
                 <h3 class="product-price text-white">&#8377; {{ product.selling_price }}</h3>
+
+                <!-- Stock Availability -->
+                <div class="mb-3">
+                    {% if product.quantity == 0 %}
+                    <span class="badge stock-status text-white bg-danger">
+                        Out of Stock
+                    </span>
+                    {% else %}
+                    <span class="badge stock-status text-white bg-success">
+                        In Stock
+                    </span>
+                    {% endif %}
+                </div>
+
                 <p class="product-description text-white">{{ product.short_description }}</p>
 
                 <!-- Variant Selection -->
@@ -138,9 +160,16 @@
                     <div class="col-6">
                         <form method="POST" action="{% url 'addToCart' product.product_id %}">
                             {% csrf_token %}
+                            <input type="hidden" name="variant_id" value="{{ product.variant.variant_id }}">
+                            {% if product.quantity > 0 %}
                             <button type="submit" class="btn btn-warning fw-bold">
                                 <i class="fas fa-shopping-cart me-2"></i>Add to Cart
                             </button>
+                            {% else %}
+                            <button type="button" class="btn btn-secondary fw-bold" disabled>
+                                <i class="fas fa-shopping-cart me-2"></i>Out of Stock
+                            </button>
+                            {% endif %}
                         </form>
                     </div>
                     <div class="col-6">
@@ -243,4 +272,3 @@
     }
 </script>
 {% endblock %}
-

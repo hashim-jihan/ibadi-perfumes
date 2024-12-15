@@ -26,6 +26,7 @@ class SignupForm(forms.ModelForm):
         if not full_name:
             raise ValidationError('Full Name is required ') 
         
+        
         return full_name
 
     def clean_email(self):
