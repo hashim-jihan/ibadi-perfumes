@@ -1,0 +1,109 @@
+/* Orders List Page Custom Styles */
+
+/* Page Container */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Page Header */
+h2 {
+    color: #343a40; /* Dark Gray */
+    font-weight: bold;
+}
+
+form input[type="text"] {
+    border: 1px solid #ced4da; /* Light Gray */
+    border-radius: 5px;
+}
+
+form button {
+    background-color: #007bff; /* Bootstrap Primary Blue */
+    color: white;
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+form button:hover {
+    background-color: #0056b3; /* Darker Blue */
+}
+
+/* Orders Table */
+.table {
+    margin-top: 20px;
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.table thead {
+    background-color: #343a40; /* Dark Gray */
+    color: white;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.1); /* Light Blue Hover */
+    transition: background-color 0.3s ease;
+}
+
+.table td, .table th {
+    vertical-align: middle;
+    text-align: center;
+}
+
+.btn-action {
+    border-radius: 5px;
+    font-size: 0.9rem;
+    padding: 5px 10px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-action:hover {
+    transform: scale(1.05);
+}
+
+/* Status Badge */
+.status {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: white;
+}
+
+.status-pending {
+    background-color: #ffc107; /* Yellow */
+}
+
+.status-completed {
+    background-color: #28a745; /* Green */
+}
+
+.status-cancelled {
+    background-color: #dc3545; /* Red */
+}
+
+/* Pagination */
+.pagination {
+    margin-top: 20px;
+}
+
+.page-item .page-link {
+    color: #343a40; /* Dark Gray */
+    border-radius: 5px;
+    border: 1px solid #ced4da;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.page-item.active .page-link {
+    background-color: #007bff; /* Bootstrap Primary Blue */
+    color: white;
+    border: none;
+}
+
+.page-item .page-link:hover {
+    background-color: #0056b3; /* Darker Blue */
+    color: white;
+}

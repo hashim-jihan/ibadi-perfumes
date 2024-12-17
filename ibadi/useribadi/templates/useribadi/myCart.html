@@ -80,7 +80,14 @@
                     <span><strong>Net Total:</strong></span>
                     <span><strong>₹{{ cartTotal }}</strong></span>
                 </div>
-                <a href="{% url 'checkoutPage' %}" class="btn btn-warning w-100">Proceed to Checkout</a>
+                <!-- Proceed to Checkout Button -->
+                <a 
+                    href="{% url 'checkoutPage' %}" 
+                    class="btn btn-warning w-100 {% if not cartItems %}disabled{% endif %}"
+                    {% if not cartItems %}aria-disabled="true"{% endif %}
+                >
+                    Proceed to Checkout
+                </a>
             </div>
         </div>
     </div>
@@ -132,6 +139,15 @@
         color: #ffc107;
         border-left: 1px solid #ffc107;
         border-right: 1px solid #ffc107;
+    }
+
+    /* Disabled Button Styling */
+    .btn-warning.disabled {
+        background-color: #6c757d !important; /* Grayish color */
+        border-color: #6c757d !important;
+        cursor: not-allowed;
+        pointer-events: none;
+        opacity: 0.65;
     }
 
     /* Additional Styling */

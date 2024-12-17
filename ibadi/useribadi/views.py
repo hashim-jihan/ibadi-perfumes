@@ -11,7 +11,7 @@ from django.utils.timezone import now,localtime
 from django.utils.crypto import get_random_string
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
-from .models import Address,Cart
+from .models import Address,Cart,ShippingAddress,Order,OrderItem
 
 
 
@@ -270,6 +270,7 @@ def userProfile(request):
 
 
 
+
 def userAddress(request):
     addresses = Address.objects.filter(user=request.user)
     return render(request,'useribadi/userAddress.html', {'addresses':addresses})
@@ -335,13 +336,18 @@ def addToCart(request, product_id):
     product = get_object_or_404(Product,product_id=product_id,variant_id=variant_id)
  
     cartItem, created = Cart.objects.get_or_create(user=request.user,product_id=product_id)
-    maxQuantity = 5
+    
+    availableStock = product.quantity
+    maxQuantity = min(5, availableStock)
+    
 
     if not created:
         if cartItem.quantity >= maxQuantity:
             messages.error(request, f'You can only add up to {maxQuantity} of {product.product_name}')
         else:
             cartItem.quantity +=1
+            if cartItem.quantity > availableStock:
+                cartItem.quantity = availableStock
             cartItem.save()
             messages.success(request,f'updated the quantity of {product.product_name} in your cart')
     else:
@@ -355,6 +361,9 @@ def addToCart(request, product_id):
 
 
 def myCart(request):
+    if not request.user.is_authenticated:
+        return redirect('userLogin')
+    
     cartItems = Cart.objects.filter(user=request.user)
 
     cartItemwithSubTotal = []
@@ -420,8 +429,9 @@ def removeFromCart(request, product_id):
     return redirect('myCart')
 
 
-def checkoutPage(request):
 
+
+def checkoutPage(request):
     cartItems = Cart.objects.filter(user=request.user)
     cartItemWithSubTotal = []
 
@@ -442,15 +452,102 @@ def checkoutPage(request):
             'variant':variant
         })
 
-        cartSubTotal = sum(item['subtotal'] for item in cartItemWithSubTotal)
-        deliveryCharge = 50 if cartItems.exists() else 0
-        cartTotal = cartSubTotal + deliveryCharge 
+    cartSubTotal = sum(item['subtotal'] for item in cartItemWithSubTotal)
+    deliveryCharge = 50 if cartItems.exists() else 0
+    cartTotal = cartSubTotal + deliveryCharge 
+
+
+    userAddress = Address.objects.filter(user=request.user)
+
+    if request.method == 'POST':
+        payment_method = request.POST.get('payment_method')
+        selected_address = request.POST.get('selected_address')
+
+
+
+        if not payment_method:
+            messages.error(request, 'Please select a payment method')
+            return redirect('checkoutPage')
+
+        if payment_method in ['UPI','ONLINE']:
+            messages.error(request, f'{payment_method} yet to be active! Please selcet cash on delivery ')
+            return redirect('checkoutPage')
+
+
+        if not selected_address:
+            messages.error(request,'Please select a delivery address')
+            return redirect('checkoutPage')
+
+        try:
+            selected_shipping_address = Address.objects.get(pk=selected_address,user=request.user)
+
+            shipping_address = ShippingAddress.objects.create(
+                user = request.user,
+                name = selected_shipping_address.name,
+                address = selected_shipping_address.address,
+                city = selected_shipping_address.city,
+                pincode = selected_shipping_address.pincode,
+                phone = selected_shipping_address.phone
+
+            )
+        except Address.DoesNotExist:
+            messages.error('Invalid address selected')
+            return redirect('checkoutPage')
+
+
+        order = Order.objects.create(user=request.user, total_amount=cartSubTotal, delivery_charge=deliveryCharge, final_amount=cartTotal, payment_method=payment_method, shipping_address=shipping_address)
+
+        for cartItem in cartItems:
+            OrderItem.objects.create(
+                order = order,
+                product = cartItem.product,
+                price = cartItem.product.selling_price,
+                final_amount = cartItem.product.selling_price * cartItem.quantity
+            )
+
+            product = cartItem.product
+            if product.quantity >=cartItem.quantity:
+                product.quantity -=cartItem.quantity
+                product.save()
+
+        cartItems.delete()
+        messages.success(request, 'Order placed successfully ')
+        return redirect('myOrder')
+            
+
+
     return render(request,'useribadi/checkout.html', {
         'cartItems':cartItemWithSubTotal,
         'cartSubTotal':cartSubTotal,
         'deliveryCharge':deliveryCharge,
-        'cartTotal':cartTotal
-    })
+        'cartTotal':cartTotal,
+        'userAddresses':userAddress
+    }) 
+
+
+
+
+def myOrder(request):
+    orders = Order.objects.filter(user=request.user).order_by(-'order_at')
+    orderWithItems = []
+
+    for order in orders:
+
+        items = OrderItem.objects.filter(order=order)
+
+        for item in items:
+            item.main_image = item.product.product_images.filter(is_main=True).first()
+        orderWithItems.append({
+            'order':order,
+            'items':items
+        })
+
+    return render(request,'useribadi/myOrder.html',{'orders':orderWithItems})
+
+
+
+
+
 
 
 

@@ -24,13 +24,13 @@
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link text-warning py-2" href="#" id="cart-link">
+                        <a class="nav-link text-warning py-2" href="{% url 'myCart' %}" id="cart-link">
                             <i class="fas fa-shopping-cart"></i> My cart
                         </a>
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link text-warning py-2" href="#" id="orders-link">
+                        <a class="nav-link text-warning py-2" href="{% url 'myOrder' %}" id="orders-link">
                             <i class="fas fa-shopping-bag me-2"></i>My Orders
                         </a>
                     </li>
@@ -41,7 +41,7 @@
                     </li>
                 </ul>
                 <hr class="bg-warning">
-                <a href="#" class="nav-link text-danger py-2">
+                <a href="{% url 'userLogout' %}" class="nav-link text-danger py-2">
                     <i class="fas fa-sign-out-alt me-2"></i>Logout
                 </a>
             </div>

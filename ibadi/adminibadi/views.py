@@ -1,12 +1,14 @@
 from django.shortcuts import render,redirect,get_object_or_404
 from .forms import aloginForm
 from django.contrib import messages
+from django.core.paginator import Paginator
 from django.contrib.auth import authenticate,login,logout
-from useribadi.models import User
+from useribadi.models import User, Order,OrderItem
 from django.db.models import Q
 from adminibadi.models import Category,Product,ProductImage,ProductVariants
 from django.views.decorators.cache import cache_control
 from django.contrib.auth.decorators import login_required
+
 
 
 # Create your views here.
@@ -281,4 +283,14 @@ def productStatus(request,product_id):
     status = 'listed' if product.is_active else 'unlisted'
     messages.success(request, f'Product "{product.product_name}" { status }')
     return redirect('productsList')
+
+
+def ordersList(request):
+    orders = Order.objects.select_related('user').all()
+
+    for order in orders:
+        orderItem = OrderItem.objects.filter(order=order).first()
+        order.order_status = orderItem.order_status
+        
+    return render(request,'adminibadi/orders.html',{'orders':orders})
 
