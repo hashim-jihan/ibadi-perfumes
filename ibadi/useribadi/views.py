@@ -528,7 +528,7 @@ def checkoutPage(request):
 
 
 def myOrder(request):
-    orders = Order.objects.filter(user=request.user).order_by(-'order_at')
+    orders = Order.objects.filter(user=request.user).order_by('-order_at')
     orderWithItems = []
 
     for order in orders:
@@ -539,7 +539,8 @@ def myOrder(request):
             item.main_image = item.product.product_images.filter(is_main=True).first()
         orderWithItems.append({
             'order':order,
-            'items':items
+            'items':items,
+            'order_status':order.get_order_status_display()
         })
 
     return render(request,'useribadi/myOrder.html',{'orders':orderWithItems})

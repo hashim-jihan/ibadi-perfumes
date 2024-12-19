@@ -1,3 +1,7 @@
+i need that if order status is delivered, then the button should be chnage to return product, and if the order status is cancelled, then it should be hide 
+
+how can  i make it possible:
+
 {% extends 'useribadi/base.html' %}
 {% load static %}
 
@@ -56,24 +60,38 @@
                         <!-- Order Header -->
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="text-warning">Order ID: {{ order.order.order_id }}</h5>
-                            <span class="text-muted">Ordered on: {{ order.order.order_at }}</span>
+                            <span class="text-muted">Ordered On: {{ order.order.order_at }}</span>
                         </div>
 
-                        <!-- Shipping Details -->
-                        <div class="mb-3">
-                            <h6 class="text-warning">Shipped To:</h6>
-                            <p>
-                                {{ order.order.shipping_address.name }}<br>
-                                {{ order.order.shipping_address.address }}, {{ order.order.shipping_address.city }}<br>
-                                {{ order.order.shipping_address.pincode }}<br>
-                                Phone: {{ order.order.shipping_address.phone }}
-                            </p>
+                        <!-- Order Status with Cancel Button -->
+                        <div class="d-flex justify-content-between mb-3">
+                            <div>
+                                <h6 class="text-warning">Shipped To:</h6>
+                                <p>
+                                    {{ order.order.shipping_address.name }}<br>
+                                    {{ order.order.shipping_address.address }}, {{ order.order.shipping_address.city }}<br>
+                                    {{ order.order.shipping_address.pincode }}<br>
+                                    Phone: {{ order.order.shipping_address.phone }}
+                                </p>
+                            </div>
+                            <div class="text-end">
+                                <h6 class="text-warning">Order Status:</h6>
+                                <p>
+                                    <span class="badge bg-info text-dark">{{ order.order_status }}</span>
+                                </p>
+                                {% if order.order_status not in 'CANCELLED DELIVERED' %}
+                                <a href="" 
+                                   class="btn btn-danger btn-sm mt-2" 
+                                   title="Cancel Order">
+                                   Cancel Order
+                                </a>
+                                {% endif %}
+                            </div>
                         </div>
 
                         <!-- Order Items -->
                         {% for item in order.items %}
                         <div class="d-flex flex-column flex-md-row align-items-center mb-4 text-light rounded p-3 border border-secondary product-row">
-                            <!-- Product Image -->
                             <div class="me-md-4 mb-3 mb-md-0 text-center">
                                 {% if item.main_image %}
                                 <img src="{{ item.main_image.images.url }}" 
@@ -87,31 +105,16 @@
                                      style="width: 100px; height: 100px;">
                                 {% endif %}
                             </div>
-                            
-                            <!-- Product Details -->
                             <div class="flex-grow-1">
                                 <h6 class="text-warning mb-1">{{ item.product.product_name }}</h6>
-                                <p class="mb-1">
-                                    <span>Size: </span>
-                                    {% if item.product.variant %}
-                                        {{ item.product.variant.variant_name }}
-                                    {% else %}
-                                        Not Specified
-                                    {% endif %}
-                                </p>
-                                <p class="mb-1"><span>Price: </span>₹{{ item.price }}</p>
+                                <p class="mb-1">Size: {{ item.product.variant.variant_name|default:"Not Specified" }}</p>
+                                <p class="mb-1">Price: ₹{{ item.price }}</p>
                             </div>
-                            
-                            <!-- Status & Cancel Order -->
-                            <div class="text-center ms-md-4">
-                                <p class="mb-1"><strong>Status:</strong> {{ item.get_order_status_display }}</p>
-                                {% if item.order_status != 'CANCELLED' %}
+                            <div class="ms-md-3 mt-2 mt-md-0">
                                 <a href="" 
-                                   class="btn btn-danger btn-sm mt-2" 
-                                   title="Cancel Order">
-                                    Cancel Order
+                                   class="btn btn-outline-danger btn-sm" >
+                                    Remove Product
                                 </a>
-                                {% endif %}
                             </div>
                         </div>
                         {% endfor %}
@@ -122,6 +125,7 @@
                             <span><strong>Total Amount:</strong></span>
                             <span>₹{{ order.order.final_amount }}</span>
                         </div>
+
                     </div>
                     {% endfor %}
                 {% else %}
@@ -133,7 +137,6 @@
 </div>
 
 <style>
-    /* Sidebar & Product Row Styling */
     .product-row {
         transition: all 0.3s ease;
     }
@@ -145,6 +148,15 @@
     .img-thumbnail {
         object-fit: cover;
         border: 2px solid #ffc107;
+    }
+    .btn-outline-danger {
+        color: #dc3545;
+        border-color: #dc3545;
+    }
+    .btn-outline-danger:hover {
+        color: #fff;
+        background-color: #dc3545;
+        border-color: #dc3545;
     }
 </style>
 {% endblock %}

@@ -1,4 +1,4 @@
-from django.shortcuts import render,redirect,get_object_or_404
+from django.shortcuts import render,redirect,get_object_or_404,HttpResponse
 from .forms import aloginForm
 from django.contrib import messages
 from django.core.paginator import Paginator
@@ -286,11 +286,24 @@ def productStatus(request,product_id):
 
 
 def ordersList(request):
-    orders = Order.objects.select_related('user').all()
 
-    for order in orders:
-        orderItem = OrderItem.objects.filter(order=order).first()
-        order.order_status = orderItem.order_status
-        
+    if request.method == 'POST':
+        order_id = request.POST.get('order_id')
+        newStatus = request.POST.get('order_status')
+
+        try:
+            order = Order.objects.get(order_id=order_id)
+            if newStatus in dict(order.order_status_choices):
+                order.order_status = newStatus
+                order.save()
+                return redirect('ordersList')
+            
+        except Order.DoesNotExist:
+            return HttpResponse('Order not found',status=404)
+            
+
+    orders = Order.objects.select_related('user').all().order_by('-order_at')
     return render(request,'adminibadi/orders.html',{'orders':orders})
+
+
 

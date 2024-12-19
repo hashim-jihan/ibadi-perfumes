@@ -107,6 +107,14 @@ class ShippingAddress(models.Model):
 
 
 class Order(models.Model):
+
+    order_status_choices = [
+        ('PENDING', 'Pending'),
+        ('SHIPPED', 'Shipped'),
+        ('DELIVERED', 'Delivered'),
+        ('CANCELLED', 'Cancelled'),
+    ]
+
     payment_method_choices = [
         ('COD', 'Cash on Delivery'),
         ('ONLINE', 'Online Payment'),
@@ -118,8 +126,6 @@ class Order(models.Model):
         ('FAILED', 'Failed'),
     ]
 
-
-
     order_id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User,on_delete=models.CASCADE, related_name='orders')
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -128,6 +134,7 @@ class Order(models.Model):
     payment_method = models.CharField(max_length=20, choices=payment_method_choices)
     payment_status = models.CharField(max_length=20, choices=payment_status_choices, default='pending')
     order_at = models.DateField(auto_now_add=True)
+    order_status = models.CharField(max_length=20,choices=order_status_choices,default='pending')
     shipping_address = models.ForeignKey(ShippingAddress, on_delete=models.CASCADE)
 
 
@@ -141,22 +148,14 @@ class Order(models.Model):
 
 
 class OrderItem(models.Model):
-    order_status_choices = [
-        ('PENDING', 'Pending'),
-        ('CONFIRMED', 'Confirmed'),
-        ('SHIPPED', 'Shipped'),
-        ('DELIVERED', 'Delivered'),
-        ('CNACELLED', 'Cancelled'),
-    ]
 
     order_item_id = models.AutoField(primary_key=True)
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     final_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    order_status = models.CharField(max_length=20,choices=order_status_choices,default='pending')
+    is_cancelled = models.BooleanField(default=False)
     
-
     class Meta:
         db_table = 'order_items'
 
