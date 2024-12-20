@@ -25,4 +25,5 @@ urlpatterns = [
     path('myOrder',views.myOrder,name='myOrder'),
     path('removeProductFromOrder/<int:order_item_id>',views.removeProductFromOrder,name='removeProductFromOrder'),
     path('cancelOrder/<int:order_id>',views.cancelOrder,name='cancelOrder'),
+    path('shopByCategory/<str:category_name>',views.shopBycategory,name='shopByCategory'),
 ]

@@ -302,7 +302,7 @@ def ordersList(request):
             return HttpResponse('Order not found',status=404)
             
 
-    orders = Order.objects.select_related('user').all().order_by('-order_at')
+    orders = Order.objects.select_related('user').all().order_by('-order_id')
     return render(request,'adminibadi/orders.html',{'orders':orders})
 
 

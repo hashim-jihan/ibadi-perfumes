@@ -130,7 +130,11 @@
                         <hr class="bg-warning">
                         <div class="d-flex justify-content-between mt-3">
                             <span><strong>Total Amount:</strong></span>
-                            <span>₹{{ order.order.final_amount }}</span>
+                            {% if order.order_status == 'CANCELLED' %}
+                                <span>₹{{ order.order.original_amount }}</span>
+                            {% else %}
+                                <span>₹{{ order.order.final_amount }}</span>
+                            {% endif %}
                         </div>
 
                     </div>

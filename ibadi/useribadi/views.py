@@ -253,7 +253,7 @@ def productPage(request, product_id, variant_id):
                 'name':related_product.product_name,
                 'price':related_product.selling_price,
                 'relatedImageUrl':relatedImageUrl,
-                'variant_id':1
+                'variant_id':related_product.variant.variant_id
             })
     return render(request, 'useribadi/productPage.html', {
         'product': product,
@@ -528,11 +528,10 @@ def checkoutPage(request):
 
 
 def myOrder(request):
-    orders = Order.objects.filter(user=request.user).order_by('-order_at')
+    orders = Order.objects.filter(user=request.user).order_by('-order_id')
     orderWithItems = []
 
     for order in orders:
-
         items = OrderItem.objects.filter(order=order)
 
         for item in items:
@@ -558,11 +557,18 @@ def removeProductFromOrder(request,order_item_id):
     orderItem.save()
 
     order = orderItem.order
-    order.final_amount -= orderItem.price
+
+    allItems = OrderItem.objects.filter(order=order)
+    remainingItems = [item for item in allItems if not item.is_cancelled]
+    if remainingItems:
+        order.final_amount -=orderItem.price
+    else:
+        order.order_status = 'Cancelled'
+        order.final_amount = order.original_amount
+
     order.save()
     messages.success(request, f'The Product {orderItem.product.product_name} has been removed from your order!')
     return redirect('myOrder')
-
 
 
 def cancelOrder(request,order_id):
@@ -571,12 +577,18 @@ def cancelOrder(request,order_id):
         print(order.order_status)
         if order.order_status in ['pending','SHIPPED']:
             order.order_status = 'Cancelled'
+            order.final_amount = order.original_amount
             order.save()
+
+            OrderItem.objects.filter(order=order).update(is_cancelled=True)
             messages.success(request, 'You order has been cancelled succussfully ')
         else:
             messages.error(request,'This order cannot be cancelled ')
 
         return redirect('myOrder')
+    
+def shopBycategory(request,category_name):
+    return render(request,'useribadi/shopPage.html')
 
 
 

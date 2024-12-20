@@ -136,7 +136,12 @@ class Order(models.Model):
     order_at = models.DateField(auto_now_add=True)
     order_status = models.CharField(max_length=20,choices=order_status_choices,default='pending')
     shipping_address = models.ForeignKey(ShippingAddress, on_delete=models.CASCADE)
+    original_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
+    def save(self,*args, **kwargs):
+        if not self.original_amount:
+            self.original_amount = self.final_amount
+        super().save(*args, **kwargs)
 
     class Meta:
         db_table = 'orders'
