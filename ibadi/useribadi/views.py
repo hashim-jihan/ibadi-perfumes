@@ -548,6 +548,43 @@ def myOrder(request):
 
 
 
+def removeProductFromOrder(request,order_item_id):
+    orderItem = get_object_or_404(OrderItem, order_item_id=order_item_id)
+
+    if orderItem.is_cancelled:
+        messages(request, 'This product is already cancelled')
+
+    orderItem.is_cancelled = True
+    orderItem.save()
+
+    order = orderItem.order
+    order.final_amount -= orderItem.price
+    order.save()
+    messages.success(request, f'The Product {orderItem.product.product_name} has been removed from your order!')
+    return redirect('myOrder')
+
+
+
+def cancelOrder(request,order_id):
+    if request.method == 'POST':
+        order = get_object_or_404(Order,order_id=order_id, user=request.user)
+        print(order.order_status)
+        if order.order_status in ['pending','SHIPPED']:
+            order.order_status = 'Cancelled'
+            order.save()
+            messages.success(request, 'You order has been cancelled succussfully ')
+        else:
+            messages.error(request,'This order cannot be cancelled ')
+
+        return redirect('myOrder')
+
+
+
+
+
+
+
+
 
 
 
