@@ -2,7 +2,7 @@ from django.shortcuts import render,redirect,get_object_or_404
 from .forms import SignupForm,userLoginForm
 from django.contrib import messages
 from .models import User
-from adminibadi.models import Product,ProductImage,ProductVariants
+from adminibadi.models import Product,ProductImage,ProductVariants,Category
 from django.core.mail import send_mail
 from django.contrib.auth import authenticate,login,logout
 from django.views.decorators.cache import cache_control
@@ -173,6 +173,8 @@ def userHome(request):
     if not request.user.is_authenticated:
         return redirect('userLogin')
 
+    categories = Category.objects.filter(is_active=True)
+
     products = Product.objects.filter(is_active=True,variant_id=1).order_by('-created_at').prefetch_related('product_images')[:9]
     featured_products = []
     seenProductNames = set()
@@ -192,7 +194,7 @@ def userHome(request):
                 }
 
             )        
-    return render(request,'useribadi/''userHome.html', {'featured_products' : featured_products})
+    return render(request,'useribadi/''userHome.html', {'featured_products' : featured_products, 'categories':categories})
 
 
 
@@ -208,7 +210,24 @@ def userLogout(request):
 def shop(request):
     if not request.user.is_authenticated:
         return redirect('userLogin')
+
+    categories = Category.objects.filter(is_active=True)
+    category_filter = request.GET.get('category')
+    sort_by = request.GET.get('sort_by')
+
     products = Product.objects.filter(is_active=True,variant_id=1).prefetch_related('product_images')
+    if category_filter:
+        products = products.filter(category__category_name__iexact=category_filter)
+
+    if sort_by == 'price_asc':
+        products = products.order_by('selling_price')
+    elif sort_by == 'price_desc':
+        products = products.order_by('-selling_price')
+    elif sort_by == 'name_asc':
+        products = products.order_by('product_name')
+    elif sort_by == 'name_desc':
+        products = products.order_by('-product_name')
+
     product_list = []
     seenProductNames = set()
 
@@ -224,7 +243,13 @@ def shop(request):
                 'imageUrl' : imageUrl,
                 'variant_id':product.variant.variant_id
             })
-    return render(request,'useribadi/shopPage.html',{'product_list' : product_list})
+    return render(request,'useribadi/shopPage.html',{
+        'product_list' : product_list,
+        'categories' : categories,
+        'selected_category':category_filter,
+        'sort_by':sort_by,
+        })
+
 
 
 def productPage(request, product_id, variant_id):
@@ -586,9 +611,6 @@ def cancelOrder(request,order_id):
             messages.error(request,'This order cannot be cancelled ')
 
         return redirect('myOrder')
-    
-def shopBycategory(request,category_name):
-    return render(request,'useribadi/shopPage.html')
 
 
 

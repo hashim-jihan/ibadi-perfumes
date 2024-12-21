@@ -27,31 +27,28 @@
 </section>
 
 <!-- Categories Section -->
- 
 <section id="categories" class="py-5">
     <div class="container">
         <h3 class="text-center text-warning mb-5">Categories</h3>
         <div class="row">
+            {% for category in categories %}
             <div class="col-md-6 mb-4">
                 <div class="category-box text-center text-light border-warning">
-                    <a href="{% url 'shopByCategory' 'Perfumes' %}" class="text-decoration-none">
+                    <a href="{% url 'shop' %}?category={{ category.category_name }}" class="text-decoration-none">
+                        {% if category.category_name|lower == 'perfumes' %}
                         <img src="{% static 'useribadi/images/classicblack.webp' %}" class="card-img-top" alt="Perfumes">
-                        <div class="card-body">
-                            <h5 class="card-title text-warning">Perfumes</h5>
-                        </div>
-                    </a>
-                </div>
-            </div>
-            <div class="col-md-6 mb-4">
-                <div class="category-box text-center text-light border-warning">
-                    <a href="{% url 'shopByCategory' 'Attar' %}" class="text-decoration-none">
+                        {% elif category.category_name|lower == 'attar' %}
                         <img src="{% static 'useribadi/images/attarctgry.webp' %}" class="card-img-top" alt="Attar">
+                        {% else %}
+                        <img src="{% static 'useribadi/images/default-category.webp' %}" class="card-img-top" alt="{{ category.category_name }}">
+                        {% endif %}
                         <div class="card-body">
-                            <h5 class="card-title text-warning">Attar</h5>
+                            <h5 class="card-title text-warning">{{ category.category_name }}</h5>
                         </div>
                     </a>
                 </div>
             </div>
+            {% endfor %}
         </div>
     </div>
 </section>
