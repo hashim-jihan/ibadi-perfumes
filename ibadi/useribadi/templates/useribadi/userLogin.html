@@ -2,17 +2,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ibadi Perfumes - Login</title>
     <!-- alertify CSS -->
     <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.14.0/build/css/alertify.min.css"/>
-    <!-- alertify Default theme -->
     <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.14.0/build/css/themes/default.min.css"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <link rel="stylesheet" href="{% static 'useribadi/userLogin.css' %}">
+    <style>
+        .login-btn {
+            display: inline-block;
+            margin-right: 10px;
+        }
 
+        .forgot-password-link {
+            display: inline-block;
+            vertical-align: top;
+            margin-top: 10px;
+        }
+
+        .forgot-password-link a {
+            text-decoration: none;
+            color: #007bff;
+        }
+
+        .forgot-password-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
     <div class="login-container">
@@ -26,24 +44,27 @@
                 <div class="form-group">
                     {{ form.email }}
                     <div class="error-message" style="color: red">
-                    {% if form.email.errors%}
+                    {% if form.email.errors %}
                     {% for error in form.email.errors %}
-                            <p>{{ error }}</p>
+                        <p>{{ error }}</p>
                     {% endfor %}
                     {% endif %}
+                    </div>
                 </div>
-                <br>
                 <div class="form-group">
                     {{ form.password }}
                     <div class="error-message" style="color: red">
-                    {% if form.password.errors%}
+                    {% if form.password.errors %}
                     {% for error in form.password.errors %}
-                            <p>{{ error }}</p>
+                        <p>{{ error }}</p>
                     {% endfor %}
                     {% endif %}
+                    </div>
                 </div>
-                <br>
                 <button type="submit" class="login-btn">Login</button>
+                <div class="forgot-password-link">
+                    <a href="{% url 'forgotPassword' %}">Forgot Password?</a>
+                </div>
             </form>
             <div class="signup-link">
                 <p>Don't have an account? <a href="{% url 'userSignup' %}">Sign up</a></p>
@@ -56,7 +77,6 @@
             </a>
         </div>
     </div>
-
 
     <!-- alertify JavaScript -->
     <script src="//cdn.jsdelivr.net/npm/alertifyjs@1.14.0/build/alertify.min.js"></script>
@@ -87,6 +107,5 @@
         {% endfor %}
         {% endif %}
     </script>
-
 </body>
 </html>

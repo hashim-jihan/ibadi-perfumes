@@ -1,21 +1,26 @@
 from django.shortcuts import render,redirect,get_object_or_404
+from django.urls import reverse
 from .forms import SignupForm,userLoginForm
 from django.contrib import messages
 from .models import User
 from adminibadi.models import Product,ProductImage,ProductVariants,Category
 from django.core.mail import send_mail
-from django.contrib.auth import authenticate,login,logout
+from django.contrib.auth import authenticate,login,logout,update_session_auth_hash
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.forms import PasswordChangeForm
 from django.views.decorators.cache import cache_control
 from datetime import datetime,timedelta
 from django.utils.timezone import now,localtime
 from django.utils.crypto import get_random_string
+import random
+from django.utils.cache import caches 
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from .models import Address,Cart,ShippingAddress,Order,OrderItem
 
 
 
-
+cache = caches['default']
 
 
 # Create your views here.
@@ -129,7 +134,7 @@ def resendOtp(request):
             fail_silently = False
         )    
         print(newOtp)
-        messages.success(request,'A new OTP has been sent to your email')
+        messages.success(request,'Check your email again,There is new otp')
         return redirect('signupOtp')
     
     except User.DoesNotExist:
@@ -166,6 +171,89 @@ def userLogin(request):
     return render(request,'useribadi/userLogin.html',{'form': form})
 
 
+def forgotPassword(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+
+        try:
+            user = User.objects.get(email=email)
+            otp = random.randint(100000,999999)
+            otpExpirationTime = now() + timedelta(minutes=1)
+
+            cache.set(f'otp_{email}',otp,timeout=60)
+            cache.set(f'otp_expiration_{email}',otpExpirationTime,timeout=60)
+
+
+            subject = 'Your password reset OTP'
+            message = f'Your OTP for resetting your password is : {otp}. This OTP is valid for 5 minutes'
+            from_email = 'ibadiperfumes111@gmail.com'
+            send_mail(subject,message,from_email, [email])
+            print(otp)
+
+            messages.success(request, 'Go to email,The otp is there')
+            return redirect('forgotPasswordOtpVerify',email=email)
+        except User.DoesNotExist:
+            messages.error(request,'No account found with this email')
+    return render(request, 'useribadi/forgotPassword.html')
+
+
+
+def forgotPasswordOtpVerify(request,email):
+    if request.method == 'POST':
+        otpInput = request.POST.get('otp')
+        otpStored = cache.get(f'otp_{email}')
+        otpExpirationTime = cache.get(f'otp_expiration_{email}')
+
+
+        if otpExpirationTime and now() > otpExpirationTime:
+            messages.error(request, 'Your otp has been expired,sorry!')
+        elif str(otpInput) == str(otpStored):
+            cache.delete(f'otp_{email}')
+            cache.delete(f'otp_expiration_{email}')
+            return redirect('resetPassword',email=email)
+        else:
+            messages.error(request, 'Invalid or Expired OTP')
+
+    otpExpirationTime = cache.get(f'otp_expiration_{email}')
+    return render(request, 'useribadi/forgotPasswordOtpVerify.html',{'otpExpirationTime':otpExpirationTime, 'email':email} )
+
+
+def resendOtpPassword(request,email):
+    try:
+        user = User.objects.get(email=email)
+        otp = random.randint(100000,999999)
+        otpExpirationTime = now() + timedelta(minutes=1)
+
+        cache.set(f'otp_{email}',otp,timeout=60)
+        cache.set(f'otp_expiration_{email}',otpExpirationTime,timeout=60)
+
+        subject = 'Your Password Reset OTP'
+        message = f'Your OTP for resetting your password is : {otp} . This OTP valid for one minutes'
+        from_email = 'ibadiperfumes111@gmail.com'
+        send_mail(subject,message,from_email,[email])
+        print(otp)
+
+        messages.success(request,'A new OTP has been sent to your email')
+    except User.DoesNotExist:
+        messages.error(request,'No account found with this email')
+    return redirect('forgotPasswordOtpVerify',email=email)
+
+
+
+def resetPassword(request,email):
+    if request.method == 'POST':
+         new_password = request.POST.get('new_password')
+         confirm_password = request.POST.get('confirm_password')
+
+         if new_password == confirm_password:
+             user = User.objects.get(email=email)
+             user.password = make_password(new_password)
+             user.save()
+             messages.success(request,'You password has been reset successfully')
+             return redirect('userLogin')
+         else:
+             messages.error(request,'Passwords do not match')
+    return render(request, 'useribadi/resetPassword.html')
 
 
 @cache_control(no_store=True, must_revalidate=True, no_cache=True)
@@ -294,6 +382,42 @@ def userProfile(request):
     return render(request, 'useribadi/userProfile.html', {'user':request.user})
 
 
+
+def editProfile(request):
+    if request.method == 'POST':
+        full_name = request.POST.get('full_name').strip()
+        if full_name:
+            request.user.full_name = full_name
+            request.user.save()
+            messages.success(request, 'Your profile has been updated successfully')
+        else:
+            messages.error(request,'Name cannot be empty')
+        return redirect(reverse('userProfile'))
+    return redirect('userProfile')
+
+
+
+@login_required
+def changePassword(request):
+    if request.method == 'POST':
+        current_password = request.POST.get('current_password')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if not request.user.check_password(current_password):
+            messages.error(request,'Current password is incorrect')
+            return redirect('userProfile')
+        
+        if new_password != confirm_password:
+            messages.error(request,'Passwords do not match')
+            return redirect('userProfile')
+        
+        request.user.set_password(new_password)
+        request.user.save()
+        update_session_auth_hash(request,request.user)
+        messages.success(request, 'Your password has been changed successfully')
+        return redirect('userProfile')
+    return redirect('userProfile')     
 
 
 def userAddress(request):

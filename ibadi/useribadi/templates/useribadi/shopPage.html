@@ -50,7 +50,7 @@
                         <div class="card-body text-center">
                             <h5 class="card-title">{{ product.name }}</h5>
                             <p class="card-text text-light">${{ product.price }}</p>
-                            <a href=""><button class="btn btn-warning btn-sm">Add to Cart</button></a>
+                            <a href="{% url 'productPage' product.id product.variant_id %}"><button class="btn btn-warning btn-sm">View Product</button></a>
                             <a><button class="btn btn-outline-warning btn-sm"><i class="fas fa-heart"></i></button></a>
                         </div>
                     </div>

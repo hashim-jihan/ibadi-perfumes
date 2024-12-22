@@ -13,7 +13,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-warning py-2" href="{% url 'userAddress' %}" id="address-link">
+                        <a class="nav-link text-warning py-2 active" href="{% url 'userAddress' %}" id="address-link">
                             <i class="fas fa-map-marker-alt me-2"></i>Manage Address
                         </a>
                     </li>
@@ -28,7 +28,7 @@
                             <i class="fas fa-shopping-cart"></i> My cart
                         </a>
                     </li>
-                    
+
                     <li class="nav-item">
                         <a class="nav-link text-warning py-2" href="{% url 'myOrder' %}" id="orders-link">
                             <i class="fas fa-shopping-bag me-2"></i>My Orders
@@ -53,50 +53,66 @@
                 <h4 class="text-warning mb-4">My Profile</h4>
 
                 <!-- Profile Details -->
-                <form method="POST" action="">
+                <form method="POST" action="{% url 'editProfile' %}">
                     {% csrf_token %}
-                    {% if is_edit_mode %}
-                        <!-- Editable Fields -->
-                        <div class="mb-3">
-                            <label for="name" class="form-label text-warning">Name</label>
-                            <input type="text" id="name" name="full_name" 
-                            class="form-control bg-dark text-light shadow-sm" 
-                            style="border: 1px solid var(--primary-color); width: 75%;"
-                            value="{{ user.full_name }}">
-                        </div>
-                        <div class="mb-3">
-                            <label for="email" class="form-label text-warning">Email</label>
-                            <input type="email" id="email" name="email" 
-                            class="form-control bg-dark text-light shadow-sm" 
-                            style="border: 1px solid var(--primary-color); width: 75%;"
-                            value="{{ user.email }}">
-                        </div>
-                        <div class="mb-3">
-                            <label for="password" class="form-label text-warning">Password</label>
-                            <input type="password" id="password" name="password" 
-                            class="form-control bg-dark text-light shadow-sm" 
-                            style="border: 1px solid var(--primary-color); width: 75%;" 
-                            placeholder="********">
-                        </div>
-                        <button type="submit" class="btn btn-warning mt-3">Save Changes</button>
-                    {% else %}
-                        <!-- Display Read-Only Profile Information -->
-                        <div class="mb-3">
-                            <label for="name" class="form-label text-warning">Name</label>
-                            <p id="name" class="form-control bg-dark text-light" style="border: 1px solid var(--primary-color); width: 75%;">{{ user.full_name }}</p>
-                        </div>
-                        <div class="mb-3">
-                            <label for="email" class="form-label text-warning">Email</label>
-                            <p id="email" class="form-control bg-dark text-light" style="border: 1px solid var(--primary-color); width: 75%;">{{ user.email }}</p>
-                        </div>
-                        <div class="mb-3">
-                            <label for="password" class="form-label text-warning">Password</label>
-                            <p id="password" class="form-control bg-dark text-light" style="border: 1px solid var(--primary-color); width: 75%;">********</p>
-                        </div>
-                        <a href="?edit=true" class="btn btn-warning mt-3">Edit</a>
-                    {% endif %}
+                    <div class="mb-3">
+                        <label for="name" class="form-label text-warning">Name</label>
+                        <input type="text" id="name" name="full_name" 
+                               class="form-control bg-dark text-light shadow-sm" 
+                               style="border: 1px solid var(--primary-color); width: 75%;"
+                               value="{{ user.full_name }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label text-warning">Email</label>
+                        <p id="email" class="form-control bg-dark text-light" 
+                           style="border: 1px solid var(--primary-color); width: 75%;" readonly>
+                            {{ user.email }}
+                        </p>
+                    </div>
+                    <div class="mt-4">
+                        <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                            Change Password
+                        </button>
+                        <button type="submit" class="btn btn-success">Save Changes</button>
+                    </div>
                 </form>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header">
+                <h5 class="modal-title text-warning" id="changePasswordModalLabel">Change Password</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{% url 'changePassword' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="currentPassword" class="form-label text-warning">Current Password</label>
+                        <input type="password" id="currentPassword" name="current_password" 
+                               class="form-control bg-dark text-light" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label text-warning">New Password</label>
+                        <input type="password" id="newPassword" name="new_password" 
+                               class="form-control bg-dark text-light" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label text-warning">Confirm Password</label>
+                        <input type="password" id="confirmPassword" name="confirm_password" 
+                               class="form-control bg-dark text-light" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Update Password</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
