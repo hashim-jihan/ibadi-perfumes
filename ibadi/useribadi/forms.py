@@ -26,6 +26,8 @@ class SignupForm(forms.ModelForm):
         if not full_name:
             raise ValidationError('Full Name is required ') 
         
+        if not full_name.isalpha():
+            raise ValidationError('Full Name must contains only alphabetic characters')
         
         return full_name
 

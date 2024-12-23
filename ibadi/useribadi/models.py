@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser,BaseUserManager
+from django.contrib.auth.models import AbstractBaseUser,BaseUserManager,PermissionsMixin
 from django.utils.crypto import get_random_string
 from datetime import datetime,timedelta
 from django.utils.timezone import now
@@ -26,11 +26,12 @@ class CustomUserManager(BaseUserManager):
     def create_superuser(self,full_name,email,password=None):
         user = self.create_user(full_name,email,password)
         user.is_admin = True
+        user.is_superuser = True
         user.save(using=self._db)
         return user
     
 
-class User(AbstractBaseUser):
+class User(AbstractBaseUser, PermissionsMixin):
     full_name = models.CharField(max_length=50)
     email = models.EmailField(unique=True)
     is_active = models.BooleanField(default=True)

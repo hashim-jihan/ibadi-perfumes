@@ -23,7 +23,7 @@
                 <th>Status</th>
                 <th>Ordered At</th>
                 <th>Update Status</th>
-                <th>Action</th>
+                {% comment %} <th>Action</th> {% endcomment %}
             </tr>
         </thead>
         <tbody>
@@ -69,9 +69,9 @@
                     </td>
 
                     <!-- Action Button -->
-                    <td>
+                    {% comment %} <td>
                         <a href="" class="btn btn-info btn-sm">View</a>
-                    </td>
+                    </td> {% endcomment %}
                 </tr>
             {% empty %}
                 <tr>

@@ -2,6 +2,7 @@ from django.shortcuts import render,redirect,get_object_or_404
 from django.urls import reverse
 from .forms import SignupForm,userLoginForm
 from django.contrib import messages
+import re
 from .models import User
 from adminibadi.models import Product,ProductImage,ProductVariants,Category
 from django.core.mail import send_mail
@@ -81,7 +82,7 @@ def signupOtp(request):
         else:
             otpExpirationTime = None
     except User.DoesNotExist:
-        messages.error(request,'Something went wrong, Please try again')
+        messages.error(request,'Hey something went wrong')
         return redirect('userSignup')
     
     if request.method == 'POST':
@@ -379,19 +380,30 @@ def productPage(request, product_id, variant_id):
 
 @login_required
 def userProfile(request):
+    if not request.user.is_authenticated:
+        return redirect('userLogin')
     return render(request, 'useribadi/userProfile.html', {'user':request.user})
 
 
 
 def editProfile(request):
+    if not request.user.is_authenticated:
+        return redirect('userLogin')
+     
     if request.method == 'POST':
         full_name = request.POST.get('full_name').strip()
-        if full_name:
-            request.user.full_name = full_name
-            request.user.save()
-            messages.success(request, 'Your profile has been updated successfully')
-        else:
-            messages.error(request,'Name cannot be empty')
+
+        if not full_name:
+            messages.error(request,'Full Name cannot be empty! ')
+            return redirect('userProfile')
+        
+        if not full_name.isalpha():
+            messages.error(request,'Full name must contains alphabetic characters')
+            return redirect('userProfile')
+        
+        request.user.full_name = full_name
+        request.user.save()
+        messages.success(request, 'Your profile has been updated successfully')
         return redirect(reverse('userProfile'))
     return redirect('userProfile')
 
@@ -399,6 +411,9 @@ def editProfile(request):
 
 @login_required
 def changePassword(request):
+    if not request.user.is_authenticated:
+        return redirect('userLogin')
+
     if request.method == 'POST':
         current_password = request.POST.get('current_password')
         new_password = request.POST.get('new_password')
@@ -406,6 +421,14 @@ def changePassword(request):
 
         if not request.user.check_password(current_password):
             messages.error(request,'Current password is incorrect')
+            return redirect('userProfile')
+        
+        if current_password == new_password:
+            messages.error(request,'current password and new password is same')
+            return redirect('userProfile')
+        
+        if len(new_password) < 8:
+            messages.error(request,'Password must be 8 characters')
             return redirect('userProfile')
         
         if new_password != confirm_password:
@@ -421,20 +444,49 @@ def changePassword(request):
 
 
 def userAddress(request):
+    if not request.user.is_authenticated:
+        return redirect('userLogin')
     addresses = Address.objects.filter(user=request.user)
     return render(request,'useribadi/userAddress.html', {'addresses':addresses})
 
 
 
 def addAddress(request):
+    if not request.user.is_authenticated:
+        return redirect('userLogin')
     if request.method == 'POST':
-        name = request.POST.get('name')
-        phone = request.POST.get('phone')
-        address = request.POST.get('address')
-        city = request.POST.get('city')
-        pincode = request.POST.get('pincode')
-        landmark = request.POST.get('landmark')
 
+        if Address.objects.filter(user=request.user).count() > 4:
+            messages.error(request, 'You can only have a maximum of 4 addresses')
+            return redirect ('userAddress')
+
+        name = request.POST.get('name').strip()
+        phone = request.POST.get('phone').strip()
+        address = request.POST.get('address').strip()
+        city = request.POST.get('city').strip()
+        pincode = request.POST.get('pincode').strip()
+        landmark = request.POST.get('landmark').strip()
+
+        if not all(char.isalpha() or char.isspace() for char in name):
+            messages.error(request,'Name must be contain only alphabetic characters')
+            return redirect('addAddress')
+        
+        if not re.fullmatch(r'^(?!([0-9])\1{9})\d{10}$', phone):
+            messages.error(request,'Must be Valid Phone number')
+            return redirect('addAddress')
+        
+        if not all(char.isalpha() or char.isspace() for char in city):
+            messages.error(request,'City must contain only alphabetic characters')
+            return redirect('addAddress')
+        
+        if not (pincode.isdigit() and len(pincode) == 6):
+            messages.error(request,'Pincode must be 6 digits')
+            return redirect('addAddress')
+        
+        if landmark and not all(char.isalpha() or char.isspace() for char in landmark):
+            messages.error(request, 'Landmark must be contain only alphabetic characters')
+            return redirect('addAddress')
+        
         user = request.user
         newAddress = Address(user=user, name=name, phone=phone, address=address, city=city, pincode=pincode, landmark=landmark)
         newAddress.save()
@@ -446,6 +498,8 @@ def addAddress(request):
 
 
 def editAddress(request,address_id):
+    if not request.user.is_authenticated:
+        return redirect('userLogin')
     currentAddress = get_object_or_404(Address, address_id=address_id)
 
     if request.method == 'POST':
@@ -457,6 +511,26 @@ def editAddress(request,address_id):
             pincode = request.POST.get('pincode')
             landmark = request.POST.get('landmark')
 
+            if not all(char.isalpha() or char.isspace() for char in name):
+                messages.error(request,'Name must be contain only alphabetic characters')
+                return redirect('editAddress',address_id=address_id)
+            
+            if not re.fullmatch(r'^(?!([0-9])\1{9})\d{10}$', phone):
+                messages.error(request,'Must be Valid Phone number')
+                return redirect('editAddress',address_id=address_id)
+            
+            if not all(char.isalpha() or char.isspace() for char in city):
+                messages.error(request,'City must contain only alphabetic characters')
+                return redirect('editAddress',address_id=address_id)
+        
+            if not (pincode.isdigit() and len(pincode) == 6):
+                messages.error(request,'Pincode must be 6 digits')
+                return redirect('editAddress',address_id=address_id)
+        
+            if landmark and not all(char.isalpha() or char.isspace() for char in landmark):
+                messages.error(request, 'Landmark must be contain only alphabetic characters')
+                return redirect('editAddress',address_id=address_id)
+            
             currentAddress.name = name
             currentAddress.phone = phone
             currentAddress.address = address
@@ -472,6 +546,8 @@ def editAddress(request,address_id):
 
 
 def deleteAddress(request,address_id):
+    if not request.user.is_authenticated:
+        return redirect('userLogin')
     currentAddess = get_object_or_404(Address,address_id=address_id)
     currentAddess.delete()
     messages.error(request,'Address Succesfully Deleted! ')
@@ -481,6 +557,9 @@ def deleteAddress(request,address_id):
 
 @csrf_exempt
 def addToCart(request, product_id):
+    if not request.user.is_authenticated:
+        return redirect('userLogin')
+    
     variant_id = request.POST.get('variant_id')
     product = get_object_or_404(Product,product_id=product_id,variant_id=variant_id)
  
@@ -547,6 +626,9 @@ def myCart(request):
 
 
 def updateCartQuantity(request, product_id):
+    if not request.user.is_authenticated:
+        return redirect('userLogin')
+    
     if request.method == 'POST':
         action = request.POST.get('action')
         cartItem = get_object_or_404(Cart,product__product_id=product_id, user=request.user)
@@ -572,6 +654,9 @@ def updateCartQuantity(request, product_id):
 
 
 def removeFromCart(request, product_id):
+    if not request.user.is_authenticated:
+        return redirect('userLogin')
+    
     product = get_object_or_404(Cart,product_id=product_id, user=request.user)
     product.delete()
     messages.error(request,'Item Removed from cart!')
@@ -581,6 +666,9 @@ def removeFromCart(request, product_id):
 
 
 def checkoutPage(request):
+    if not request.user.is_authenticated:
+        return redirect('userLogin')
+    
     cartItems = Cart.objects.filter(user=request.user)
     cartItemWithSubTotal = []
 
@@ -677,6 +765,9 @@ def checkoutPage(request):
 
 
 def myOrder(request):
+    if not request.user.is_authenticated:
+        return redirect('userLogin')
+    
     orders = Order.objects.filter(user=request.user).order_by('-order_id')
     orderWithItems = []
 
@@ -697,6 +788,9 @@ def myOrder(request):
 
 
 def removeProductFromOrder(request,order_item_id):
+    if not request.user.is_authenticated:
+        return redirect('userLogin')
+    
     orderItem = get_object_or_404(OrderItem, order_item_id=order_item_id)
 
     if orderItem.is_cancelled:
@@ -721,6 +815,9 @@ def removeProductFromOrder(request,order_item_id):
 
 
 def cancelOrder(request,order_id):
+    if not request.user.is_authenticated:
+        return redirect('userLogin')
+    
     if request.method == 'POST':
         order = get_object_or_404(Order,order_id=order_id, user=request.user)
         print(order.order_status)
