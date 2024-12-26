@@ -31,4 +31,8 @@ urlpatterns = [
     path('myOrder',views.myOrder,name='myOrder'),
     path('removeProductFromOrder/<int:order_item_id>',views.removeProductFromOrder,name='removeProductFromOrder'),
     path('cancelOrder/<int:order_id>',views.cancelOrder,name='cancelOrder'),
+    path('addToWishlist/<int:product_id>',views.addToWishlist,name='addToWishlist'),
+    path('wishlist',views.wishlist,name='wishlist'),
+    path('removeFromWishlist/<int:product_id>',views.removeFromWishlist,name='removeFromWishlist'),
+    path('wallet',views.wallet,name='wallet'),
 ]

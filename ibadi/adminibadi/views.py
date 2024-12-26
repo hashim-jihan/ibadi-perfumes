@@ -1,4 +1,6 @@
 from django.shortcuts import render,redirect,get_object_or_404,HttpResponse
+from django.urls import reverse
+from decimal import Decimal
 from .forms import aloginForm
 from django.contrib import messages
 from django.core.paginator import Paginator
@@ -370,6 +372,20 @@ def ordersList(request):
 
     orders = Order.objects.select_related('user').all().order_by('-order_id')
     return render(request,'adminibadi/orders.html',{'orders':orders})
+
+
+
+def addProductOffer(request, product_id):
+    product = get_object_or_404(Product,product_id=product_id)
+    if request.method == 'POST':
+        offerPercentage = request.POST.get('offer_percentage')
+        if offerPercentage:
+            product.product_offer_percentage = Decimal(offerPercentage)
+            discount  = (product.regular_price * offerPercentage)/Decimal(100)
+            product.selling_price = product.regular_price - discount
+            product.product_offer_percentage = offerPercentage
+            product.save()
+        return redirect(reverse('productsList'))
 
 
 

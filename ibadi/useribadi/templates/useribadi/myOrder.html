@@ -5,7 +5,7 @@
 <div class="container py-5">
     <div class="row">
         <!-- Sidebar -->
-        <div class="col-md-3 mb-4">
+        <div class="col-md-3 mb-4 ">
             <div class="bg-dark text-light rounded shadow p-3">
                 <ul class="nav flex-column">
                     <li class="nav-item">
@@ -19,7 +19,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-warning py-2" href="" id="wishlist-link">
+                        <a class="nav-link text-warning py-2" href="{% url 'wishlist' %}" id="wishlist-link">
                             <i class="fas fa-heart me-2"></i>My Wishlist
                         </a>
                     </li>
@@ -34,7 +34,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-warning py-2" href="" id="wallet-link">
+                        <a class="nav-link text-warning py-2" href="{% url 'wallet' %}" id="wallet-link">
                             <i class="fas fa-wallet me-2"></i>My Wallet
                         </a>
                     </li>
@@ -111,6 +111,7 @@
                             <div class="flex-grow-1">
                                 <h6 class="text-warning mb-1">{{ item.product.product_name }}</h6>
                                 <p class="mb-1">Size: {{ item.product.variant.variant_name|default:"Not Specified" }}</p>
+                                <p class="mb-1">Quantity: {{ item.quantity }}</p>
                                 <p class="mb-1">Price: ₹{{ item.price }}</p>
                             </div>
                             <div class="ms-md-3 mt-2 mt-md-0">

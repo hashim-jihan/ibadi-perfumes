@@ -17,7 +17,7 @@ import random
 from django.utils.cache import caches 
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
-from .models import Address,Cart,ShippingAddress,Order,OrderItem
+from .models import Address,Cart,ShippingAddress,Order,OrderItem,Wishlist
 
 
 
@@ -447,19 +447,16 @@ def userAddress(request):
     if not request.user.is_authenticated:
         return redirect('userLogin')
     addresses = Address.objects.filter(user=request.user)
-    return render(request,'useribadi/userAddress.html', {'addresses':addresses})
+    addressCount = addresses.count()
+    return render(request,'useribadi/userAddress.html', {'addresses':addresses, 'addressCount':addressCount})
 
 
 
 def addAddress(request):
     if not request.user.is_authenticated:
         return redirect('userLogin')
+    
     if request.method == 'POST':
-
-        if Address.objects.filter(user=request.user).count() > 4:
-            messages.error(request, 'You can only have a maximum of 4 addresses')
-            return redirect ('userAddress')
-
         name = request.POST.get('name').strip()
         phone = request.POST.get('phone').strip()
         address = request.POST.get('address').strip()
@@ -739,7 +736,8 @@ def checkoutPage(request):
                 order = order,
                 product = cartItem.product,
                 price = cartItem.product.selling_price,
-                final_amount = cartItem.product.selling_price * cartItem.quantity
+                final_amount = cartItem.product.selling_price * cartItem.quantity,
+                quantity = cartItem.quantity
             )
 
             product = cartItem.product
@@ -796,6 +794,10 @@ def removeProductFromOrder(request,order_item_id):
     if orderItem.is_cancelled:
         messages(request, 'This product is already cancelled')
 
+    product = orderItem.product
+    product.quantity += orderItem.quantity
+    product.save()
+
     orderItem.is_cancelled = True
     orderItem.save()
 
@@ -814,24 +816,82 @@ def removeProductFromOrder(request,order_item_id):
     return redirect('myOrder')
 
 
+
+
 def cancelOrder(request,order_id):
     if not request.user.is_authenticated:
         return redirect('userLogin')
     
     if request.method == 'POST':
         order = get_object_or_404(Order,order_id=order_id, user=request.user)
-        print(order.order_status)
         if order.order_status in ['pending','SHIPPED']:
+            orderItems = OrderItem.objects.filter(order=order)
+            for orderItem in orderItems:
+                if not orderItem.is_cancelled:
+                    product = orderItem.product
+                    product.quantity += orderItem.quantity
+                    product.save()
+                    orderItem.is_cancelled = True
+                    orderItem.save()
+
             order.order_status = 'Cancelled'
             order.final_amount = order.original_amount
             order.save()
-
-            OrderItem.objects.filter(order=order).update(is_cancelled=True)
             messages.success(request, 'You order has been cancelled succussfully ')
         else:
             messages.error(request,'This order cannot be cancelled ')
-
         return redirect('myOrder')
+    
+def addToWishlist(request,product_id):
+    if not request.user.is_authenticated:
+        return redirect('userLogin')
+    
+    product =get_object_or_404(Product,product_id=product_id)
+
+    existingItem = Wishlist.objects.filter(user=request.user, product__product_name=product.product_name).first()
+
+    if existingItem:
+        messages.error(request,f'{product.product_name} is already in your wishlist')
+    else:
+        wishlistItem , created = Wishlist.objects.get_or_create(user=request.user, product_id=product_id)
+
+        if created:
+            messages.success(request,f'{product.product_name} has beed added to your wishlist')
+    return redirect('productPage', product_id=product_id,variant_id=product.variant.variant_id)
+
+
+
+
+def wishlist(request):
+    if not request.user.is_authenticated:
+        return redirect('userLogin')
+    
+    wishlistItems = Wishlist.objects.filter(user=request.user)
+    wishlistProducts = []
+    for item in wishlistItems:
+        mainImage = item.product.product_images.filter(is_main=True).first()
+        wishlistProducts.append({
+            'id':item.product.product_id,
+            'image':mainImage.images.url,
+            'name':item.product.product_name,
+            'price':item.product.selling_price,
+            'variant_id':item.product.variant.variant_id
+            })
+    return render(request,'useribadi/wishlist.html',{'wishlistProducts':wishlistProducts})
+
+
+
+def removeFromWishlist(request,product_id):
+    product = get_object_or_404(Wishlist,product_id=product_id, user=request.user)
+    product.delete()
+    messages.error(request,'Prouct removed from your wishlist')
+    return redirect('wishlist')
+
+
+
+def wallet(request):
+    return render(request,'useribadi/wallet.html')
+    
 
 
 

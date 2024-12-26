@@ -35,7 +35,7 @@
                 </ul>
                 <div class="navbar-nav">
                     <a href="#" class="nav-item nav-link text-warning"><i class="fas fa-search"></i></a>
-                    <a href="#" class="nav-item nav-link text-warning"><i class="fas fa-heart"></i></a>
+                    <a href="{% url 'wishlist' %}" class="nav-item nav-link text-warning"><i class="fas fa-heart"></i></a>
                     <a href="{% url 'myCart' %}" class="nav-item nav-link text-warning"><i class="fas fa-shopping-cart"></i></a>
                     {% if user.is_authenticated %}
                     <div class="nav-item dropdown">

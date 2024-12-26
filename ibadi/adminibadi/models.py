@@ -60,6 +60,7 @@ class Product(models.Model):
     description = models.TextField()
     regular_price = models.DecimalField(max_digits=10, decimal_places=2)
     selling_price = models.DecimalField(max_digits=10, decimal_places=2)
+    product_offer_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     quantity = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)

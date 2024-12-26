@@ -31,6 +31,7 @@
                 <th>Variants</th>
                 <th>Actions</th>
                 <th>Edit</th>
+                <th>Offer</th>
             </tr>
         </thead>
         <tbody>
@@ -42,25 +43,64 @@
                     <td>{{ product.selling_price }}</td>
                     <td>{{ product.quantity }}</td>
                     <td>{{ product.variant.variant_name }}</td>
-
-
                     <td>
-                            {% if product.is_active %}
-                                <a href="{% url 'productStatus' product.product_id %}" class="btn btn-danger btn-sm btn-action">Unlist</button>
-                            {% else %}
-                                <a href="{% url 'productStatus' product.product_id %}" class="btn btn-success btn-sm btn-action">List</button>
-                            {% endif %}
+                        {% if product.is_active %}
+                            <a href="{% url 'productStatus' product.product_id %}" class="btn btn-danger btn-sm btn-action">Unlist</a>
+                        {% else %}
+                            <a href="{% url 'productStatus' product.product_id %}" class="btn btn-success btn-sm btn-action">List</a>
+                        {% endif %}
                     </td>
-                    
-
-
                     <td>
                         <a href="{% url 'editProduct' product.product_id %}" class="btn btn-warning btn-sm btn-action">Edit</a>
                     </td>
+                    <td>
+                        <button 
+                            class="btn btn-primary btn-sm btn-action" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#offerModal{{ product.product_id }}">
+                            Add Offer
+                        </button>
+                    </td>
                 </tr>
+
+                <!-- Offer Modal -->
+                <div 
+                    class="modal fade" 
+                    id="offerModal{{ product.product_id }}" 
+                    tabindex="-1" 
+                    aria-labelledby="offerModalLabel{{ product.product_id }}" 
+                    aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form method="post" action="{% url 'addProductOffer' product.product_id %}">
+                                {% csrf_token %}
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="offerModalLabel{{ product.product_id }}">Add Offer for {{ product.product_name }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label for="offerPercentage{{ product.product_id }}" class="form-label">Offer Percentage</label>
+                                        <input 
+                                            type="number" 
+                                            step="0.01" 
+                                            class="form-control" 
+                                            id="offerPercentage{{ product.product_id }}" 
+                                            name="offer_percentage" 
+                                            required>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button type="submit" class="btn btn-primary">Save Offer</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             {% empty %}
                 <tr>
-                    <td colspan="8" class="text-center">No products found.</td>
+                    <td colspan="9" class="text-center">No products found.</td>
                 </tr>
             {% endfor %}
         </tbody>

@@ -27,6 +27,7 @@
                 <th>Category Name</th>
                 <th>Action</th>
                 <th>Edit</th>
+                <th>Add Offer</th>
             </tr>
         </thead>
         <tbody>
@@ -44,10 +45,71 @@
                     <td>
                         <a href="{% url 'editCategory' category.category_id %}" class="btn btn-warning btn-sm btn-action">Edit</a>
                     </td>
+                    <td>
+                        <button 
+                            class="btn btn-primary btn-sm btn-action" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#offerModal{{ category.category_id }}">
+                            Add Offer
+                        </button>
+                    </td>
                 </tr>
+
+                <!-- Offer Modal -->
+                <div 
+                    class="modal fade" 
+                    id="offerModal{{ category.category_id }}" 
+                    tabindex="-1" 
+                    aria-labelledby="offerModalLabel{{ category.category_id }}" 
+                    aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form method="post" action="">
+                                {% csrf_token %}
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="offerModalLabel{{ category.category_id }}">Add Offer for {{ category.category_name }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label for="offerType{{ category.category_id }}" class="form-label">Offer Type</label>
+                                        <select 
+                                            class="form-select" 
+                                            id="offerType{{ category.category_id }}" 
+                                            name="offer_type" disabled>
+                                            <option value="PERCENTAGE">Percentage</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="offerValue{{ category.category_id }}" class="form-label">Offer Value (%)</label>
+                                        <input 
+                                            type="number" 
+                                            step="0.01" 
+                                            class="form-control" 
+                                            id="offerValue{{ category.category_id }}" 
+                                            name="offer_value" 
+                                            required>
+                                    </div>
+                                    <div class="mb-3 form-check">
+                                        <input 
+                                            type="checkbox" 
+                                            class="form-check-input" 
+                                            id="offerActive{{ category.category_id }}" 
+                                            name="offer_active">
+                                        <label class="form-check-label" for="offerActive{{ category.category_id }}">Activate Offer</label>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button type="submit" class="btn btn-primary">Save Offer</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             {% empty %}
                 <tr>
-                    <td colspan="4" class="text-center">No categories found.</td>
+                    <td colspan="5" class="text-center">No categories found.</td>
                 </tr>
             {% endfor %}
         </tbody>

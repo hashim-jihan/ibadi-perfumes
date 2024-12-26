@@ -1,0 +1,111 @@
+{% extends 'useribadi/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 mb-4">
+            <div class="bg-dark text-light rounded shadow p-3">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link text-warning py-2" href="{% url 'userProfile' %}" id="profile-link">
+                            <i class="fas fa-user me-2"></i>My Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-warning py-2" href="{% url 'userAddress' %}" id="address-link">
+                            <i class="fas fa-map-marker-alt me-2"></i>Manage Address
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-warning py-2" href="{% url 'wishlist' %}" id="wishlist-link">
+                            <i class="fas fa-heart me-2"></i>My Wishlist
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-warning py-2" href="{% url 'myCart' %}" id="cart-link">
+                            <i class="fas fa-shopping-cart"></i> My Cart
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-warning py-2" href="{% url 'myOrder' %}" id="orders-link">
+                            <i class="fas fa-shopping-bag me-2"></i>My Orders
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-warning py-2 active" href="{% url 'wallet' %}" id="wallet-link">
+                            <i class="fas fa-wallet me-2"></i>My Wallet
+                        </a>
+                    </li>
+                </ul>
+                <hr class="bg-warning">
+                <a href="{% url 'userLogout' %}" class="nav-link text-danger py-2">
+                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Wallet Content -->
+        <div class="col-md-9">
+            <div class="bg-dark text-light rounded shadow p-4">
+                <h4 class="text-warning mb-4">My Wallet</h4>
+                
+                {% if wallet_transactions %}
+                    <div class="mb-3">
+                        <h5 class="text-warning">Transaction History</h5>
+                        {% for transaction in wallet_transactions %}
+                        <div class="bg-dark text-light rounded shadow-sm p-3 mb-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="text-warning">{{ transaction.date }}</h6>
+                                <span class="badge bg-success">{{ transaction.status }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span><strong>Order ID:</strong> {{ transaction.order_id }}</span>
+                                <span><strong>Amount:</strong> ₹{{ transaction.amount }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2">
+                                <span><strong>Reason:</strong> {{ transaction.reason }}</span>
+                                {% if transaction.status == 'Refunded' %}
+                                    <span class="badge bg-danger">Refunded</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center text-warning">You have no wallet transactions yet.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .product-row {
+        transition: all 0.3s ease;
+    }
+    .product-row:hover {
+        background-color: rgba(255, 193, 7, 0.1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        transform: scale(1.02);
+    }
+    .img-thumbnail {
+        object-fit: cover;
+        border: 2px solid #ffc107;
+    }
+    .btn-outline-danger {
+        color: #dc3545;
+        border-color: #dc3545;
+    }
+    .btn-outline-danger:hover {
+        color: #fff;
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+    .badge.bg-danger {
+        background-color: #dc3545 !important;
+    }
+</style>
+
+{% endblock %}

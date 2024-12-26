@@ -18,7 +18,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-warning py-2" href="#" id="wishlist-link">
+                        <a class="nav-link text-warning py-2" href="{% url 'wishlist' %}" id="wishlist-link">
                             <i class="fas fa-heart me-2"></i>My Wishlist
                         </a>
                     </li>
@@ -35,7 +35,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-warning py-2" href="#" id="wallet-link">
+                        <a class="nav-link text-warning py-2" href="{% url 'wallet' %}" id="wallet-link">
                             <i class="fas fa-wallet me-2"></i>My Wallet
                         </a>
                     </li>
@@ -54,9 +54,15 @@
 
                 <!-- Add Address Button -->
                 <div class="d-flex justify-content-end mb-4">
-                    <button class="btn btn-warning" onclick="window.location.href='{% url 'addAddress' %}'">
-                        <i class="fas fa-plus me-2"></i>Add Address
-                    </button>
+                    {% if addressCount < 4 %}
+                        <button class="btn btn-warning" onclick="window.location.href='{% url 'addAddress' %}'">
+                            <i class="fas fa-plus me-2"></i>Add Address
+                        </button>
+                    {% else %}
+                        <button class="btn btn-warning" disabled>
+                            <i class="fas fa-plus me-2"></i>Address Limit Reached
+                        </button>
+                    {% endif %}
                 </div>
 
                 <!-- Address Boxes Section -->
@@ -65,12 +71,12 @@
                         <div class="col-md-6 mb-4">
                             <div class="card bg-dark text-light border-warning shadow-sm">
                                 <div class="card-body">
-                                    <p class="mb-2"> {{ address.name }}</p>
-                                    <p class="mb-2"> {{ address.address }}</p>
-                                    <p class="mb-2"> {{ address.city }}</p>
-                                    <p class="mb-2"> {{ address.landmark }}</p>
-                                    <p class="mb-2"> {{ address.pincode }}</p>
-                                    <p class="mb-2"> {{ address.phone }}</p>
+                                    <p class="mb-2">{{ address.name }}</p>
+                                    <p class="mb-2">{{ address.address }}</p>
+                                    <p class="mb-2">{{ address.city }}</p>
+                                    <p class="mb-2">{{ address.landmark }}</p>
+                                    <p class="mb-2">{{ address.pincode }}</p>
+                                    <p class="mb-2">{{ address.phone }}</p>
 
                                     <div class="d-flex justify-content-between">
                                         <a href="{% url 'editAddress' address.address_id %}" class="btn btn-sm btn-warning">Edit</a>
@@ -89,4 +95,11 @@
     </div>
 </div>
 
+<!-- Additional CSS -->
+<style>
+    button[disabled] {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+</style>
 {% endblock %}
