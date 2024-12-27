@@ -32,6 +32,7 @@
                 <th>Actions</th>
                 <th>Edit</th>
                 <th>Offer</th>
+                <th>Offer %</th>
             </tr>
         </thead>
         <tbody>
@@ -61,6 +62,7 @@
                             Add Offer
                         </button>
                     </td>
+                    <td>{{ product.product_offer_percentage }}</td>
                 </tr>
 
                 <!-- Offer Modal -->
@@ -75,7 +77,20 @@
                             <form method="post" action="{% url 'addProductOffer' product.product_id %}">
                                 {% csrf_token %}
                                 <div class="modal-header">
-                                    <h5 class="modal-title" id="offerModalLabel{{ product.product_id }}">Add Offer for {{ product.product_name }}</h5>
+                                    <h5 class="modal-title d-flex align-items-center" id="offerModalLabel{{ product.product_id }}">
+                                        Add Offer for {{ product.product_name }}
+                                        {% if product.product_offer_percentage %}
+                                            <span 
+                                                class="badge bg-success ms-3">
+                                                {{ product.product_offer_percentage }}% Off
+                                            </span>
+                                        {% else %}
+                                            <span 
+                                                class="badge bg-secondary ms-3">
+                                                No Current Offer
+                                            </span>
+                                        {% endif %}
+                                    </h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body">
@@ -100,7 +115,7 @@
                 </div>
             {% empty %}
                 <tr>
-                    <td colspan="9" class="text-center">No products found.</td>
+                    <td colspan="10" class="text-center">No products found.</td>
                 </tr>
             {% endfor %}
         </tbody>

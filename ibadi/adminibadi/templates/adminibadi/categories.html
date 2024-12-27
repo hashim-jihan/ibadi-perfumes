@@ -27,7 +27,8 @@
                 <th>Category Name</th>
                 <th>Action</th>
                 <th>Edit</th>
-                <th>Add Offer</th>
+                <th>Offer</th>
+                <th>Offer %</th>
             </tr>
         </thead>
         <tbody>
@@ -53,6 +54,13 @@
                             Add Offer
                         </button>
                     </td>
+                    <td>
+                        {% if category.category_offer_percentage %}
+                            <span class="badge bg-success">{{ category.category_offer_percentage }}% Off</span>
+                        {% else %}
+                            <span class="badge bg-secondary">No Offer</span>
+                        {% endif %}
+                    </td>
                 </tr>
 
                 <!-- Offer Modal -->
@@ -64,39 +72,31 @@
                     aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
-                            <form method="post" action="">
+                            <form method="post" action="{% url 'addCategoryOffer' category.category_id %}">
                                 {% csrf_token %}
                                 <div class="modal-header">
-                                    <h5 class="modal-title" id="offerModalLabel{{ category.category_id }}">Add Offer for {{ category.category_name }}</h5>
+                                    <h5 class="modal-title d-flex align-items-center" id="offerModalLabel{{ category.category_id }}">
+                                        Add Offer for {{ category.category_name }}
+                                        {% if category.category_offer_percentage %}
+                                            <span class="badge bg-success ms-3">
+                                                {{ category.category_offer_percentage }}% Off
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary ms-3">No Current Offer</span>
+                                        {% endif %}
+                                    </h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body">
                                     <div class="mb-3">
-                                        <label for="offerType{{ category.category_id }}" class="form-label">Offer Type</label>
-                                        <select 
-                                            class="form-select" 
-                                            id="offerType{{ category.category_id }}" 
-                                            name="offer_type" disabled>
-                                            <option value="PERCENTAGE">Percentage</option>
-                                        </select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="offerValue{{ category.category_id }}" class="form-label">Offer Value (%)</label>
+                                        <label for="offerPercentage{{ category.category_id }}" class="form-label">Offer Percentage</label>
                                         <input 
                                             type="number" 
                                             step="0.01" 
                                             class="form-control" 
-                                            id="offerValue{{ category.category_id }}" 
-                                            name="offer_value" 
+                                            id="offerPercentage{{ category.category_id }}" 
+                                            name="category_offer" 
                                             required>
-                                    </div>
-                                    <div class="mb-3 form-check">
-                                        <input 
-                                            type="checkbox" 
-                                            class="form-check-input" 
-                                            id="offerActive{{ category.category_id }}" 
-                                            name="offer_active">
-                                        <label class="form-check-label" for="offerActive{{ category.category_id }}">Activate Offer</label>
                                     </div>
                                 </div>
                                 <div class="modal-footer">
@@ -109,7 +109,7 @@
                 </div>
             {% empty %}
                 <tr>
-                    <td colspan="5" class="text-center">No categories found.</td>
+                    <td colspan="6" class="text-center">No categories found.</td>
                 </tr>
             {% endfor %}
         </tbody>

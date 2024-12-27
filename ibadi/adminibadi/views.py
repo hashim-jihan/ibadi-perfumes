@@ -376,16 +376,60 @@ def ordersList(request):
 
 
 def addProductOffer(request, product_id):
-    product = get_object_or_404(Product,product_id=product_id)
     if request.method == 'POST':
-        offerPercentage = request.POST.get('offer_percentage')
-        if offerPercentage:
-            product.product_offer_percentage = Decimal(offerPercentage)
-            discount  = (product.regular_price * offerPercentage)/Decimal(100)
-            product.selling_price = product.regular_price - discount
-            product.product_offer_percentage = offerPercentage
+        product = get_object_or_404(Product, product_id=product_id)
+        productOffer = Decimal(request.POST.get('offer_percentage',0))
+        if productOffer > 0 or productOffer < 100:
+            
+            categoryOffer = product.category.category_offer_percentage or Decimal(0)
+            if productOffer > categoryOffer:
+                applicableOffer = productOffer
+            else:
+                applicableOffer = categoryOffer
+
+            discountAmount = (product.regular_price * applicableOffer) / 100
+            product.selling_price = product.regular_price - discountAmount
+            product.product_offer_percentage = productOffer
             product.save()
-        return redirect(reverse('productsList'))
+            messages.success(request, f'Offer applied to {product.product_name}')
+        else:
+            messages.error(request, 'Please provide valid offer percentage')
+    return redirect(reverse('productsList'))
+
+
+
+def addCategoryOffer(request, category_id):
+    if request.method == 'POST':
+        category = get_object_or_404(Category,category_id=category_id)
+        try:
+            categoryOffer = Decimal(request.POST.get('category_offer', 0))
+        except:
+            messages.error(request, 'Please provide valid offer percentage')
+            return redirect(reverse('category'))
+        
+        
+        if 0 <= categoryOffer <= 100:
+            category.category_offer_percentage = categoryOffer
+            category.save()
+
+            products = Product.objects.filter(category=category, is_active=True)
+            for product in products:
+                productOffer = product.product_offer_percentage or Decimal(0)
+
+                if categoryOffer > productOffer:
+                    applicableOffer = categoryOffer
+                else:
+                    applicableOffer = productOffer
+                
+                discountAmount = (product.regular_price * categoryOffer) / 100
+                product.selling_price = product.regular_price - discountAmount
+                product.product_offer_percentage = categoryOffer
+                product.save()
+            messages.success(request, f'Offer applied to catgory {category.category_name}')
+        else:
+            messages.error(request,'Pleases provide valid offer percentage')
+    return redirect(reverse('category'))
+                
 
 
 

@@ -18,4 +18,5 @@ urlpatterns = [
     path('productStatus/<int:product_id>/',views.productStatus,name='productStatus'),
     path('ordersList',views.ordersList,name='ordersList'),
     path('addProductOffer/<int:product_id>',views.addProductOffer,name='addProductOffer'),
+    path('addCategoryOffer/<int:category_id>',views.addCategoryOffer,name='addCategoryOffer'),
 ]

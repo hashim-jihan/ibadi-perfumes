@@ -6,6 +6,7 @@ class Category(models.Model):
     category_id = models.AutoField(primary_key=True)
     category_name = models.CharField(max_length=50, unique=True)
     description = models.TextField(null=True, blank=True)
+    category_offer_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, default=int(0))
     is_active = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)
 
