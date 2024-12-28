@@ -58,7 +58,10 @@
                     </div>
                 </div>
                 {% empty %}
-                <div class="text-center text-warning">Your cart is empty!</div>
+                <div class="text-center text-warning mb-4">
+                    <p>Your cart is empty!</p>
+                    <a href="{% url 'shop' %}" class="btn btn-warning">Continue Shopping</a>
+                </div>
                 {% endfor %}
             </div>
         </div>

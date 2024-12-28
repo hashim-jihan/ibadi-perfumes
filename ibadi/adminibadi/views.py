@@ -1,13 +1,13 @@
 from django.shortcuts import render,redirect,get_object_or_404,HttpResponse
 from django.urls import reverse
 from decimal import Decimal
-from .forms import aloginForm
+from .forms import aloginForm, CouponForm
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.contrib.auth import authenticate,login,logout
 from useribadi.models import User, Order,OrderItem
 from django.db.models import Q
-from adminibadi.models import Category,Product,ProductImage,ProductVariants
+from adminibadi.models import Category,Product,ProductImage,ProductVariants,Coupon
 from django.views.decorators.cache import cache_control
 from django.contrib.auth.decorators import login_required
 
@@ -167,6 +167,12 @@ def categoryStatus(request, category_id):
 
 def productsList(request):
     products = Product.objects.filter(is_deleted=False).order_by('-created_at').prefetch_related('product_images').select_related('category','variant')
+
+    for product in products:
+        product.effectiveOfferPercentage = max(
+            product.product_offer_percentage or 0,
+            product.category.category_offer_percentage or 0
+            )
     return render(request,'adminibadi/products.html',{'products' : products})
 
 
@@ -354,7 +360,6 @@ def productStatus(request,product_id):
 
 
 def ordersList(request):
-
     if request.method == 'POST':
         order_id = request.POST.get('order_id')
         newStatus = request.POST.get('order_status')
@@ -364,14 +369,12 @@ def ordersList(request):
             if newStatus in dict(order.order_status_choices):
                 order.order_status = newStatus
                 order.save()
-                return redirect('ordersList')
-            
+                return redirect('ordersList')  
         except Order.DoesNotExist:
             return HttpResponse('Order not found',status=404)
-            
-
     orders = Order.objects.select_related('user').all().order_by('-order_id')
     return render(request,'adminibadi/orders.html',{'orders':orders})
+
 
 
 
@@ -379,14 +382,17 @@ def addProductOffer(request, product_id):
     if request.method == 'POST':
         product = get_object_or_404(Product, product_id=product_id)
         productOffer = Decimal(request.POST.get('offer_percentage',0))
-        if productOffer > 0 or productOffer < 100:
-            
+        if 0 <= productOffer <= 100:
             categoryOffer = product.category.category_offer_percentage or Decimal(0)
+            print(categoryOffer)
+            print(productOffer)
+
             if productOffer > categoryOffer:
                 applicableOffer = productOffer
             else:
                 applicableOffer = categoryOffer
 
+            print(applicableOffer)
             discountAmount = (product.regular_price * applicableOffer) / 100
             product.selling_price = product.regular_price - discountAmount
             product.product_offer_percentage = productOffer
@@ -415,20 +421,107 @@ def addCategoryOffer(request, category_id):
             products = Product.objects.filter(category=category, is_active=True)
             for product in products:
                 productOffer = product.product_offer_percentage or Decimal(0)
+                print(categoryOffer)
+                print(productOffer)
 
                 if categoryOffer > productOffer:
                     applicableOffer = categoryOffer
                 else:
                     applicableOffer = productOffer
                 
-                discountAmount = (product.regular_price * categoryOffer) / 100
+                print(applicableOffer)
+                discountAmount = (product.regular_price * applicableOffer) / 100
                 product.selling_price = product.regular_price - discountAmount
-                product.product_offer_percentage = categoryOffer
+                # product.product_offer_percentage = categoryOffer
                 product.save()
             messages.success(request, f'Offer applied to catgory {category.category_name}')
         else:
             messages.error(request,'Pleases provide valid offer percentage')
     return redirect(reverse('category'))
+
+
+
+def coupons(request):
+    coupons = Coupon.objects.filter(is_active = True)
+    return render(request, 'adminibadi/coupons.html',{'coupons':coupons})
+
+
+def addCoupon(request):
+    if request.method == 'POST':
+        form = CouponForm(request.POST)
+        if form.is_valid():
+            coupon_code = form.cleaned_data['coupon_code']
+            coupon_name = form.cleaned_data['coupon_name']
+            discount_percentage = form.cleaned_data['discount_percentage']
+            minimum_purchase = form.cleaned_data['minimum_purchase']
+            maximum_discount = form.cleaned_data['maximum_discount']
+            expiry_date = form.cleaned_data['expiry_date']
+            if maximum_discount > minimum_purchase:
+                messages.error(request,'Maximum discount should be less than minimum purchase')
+            else:
+                Coupon.objects.create(
+                    coupon_code = coupon_code,
+                    coupon_name = coupon_name,
+                    discount_percentage = discount_percentage,
+                    minimum_purchase = minimum_purchase,
+                    maximum_discount = maximum_discount,
+                    expiry_date = expiry_date
+            )
+            messages.success(request,'Coupon addedd succeffully')
+            return redirect('coupons')
+
+        else:
+            messages.error(request, 'Please correct the error below')
+    else:
+        form = CouponForm()
+    return render(request, 'adminibadi/addCoupon.html', {'form':form})
+
+
+
+
+def editCoupon(request, coupon_id):
+    coupon = get_object_or_404(Coupon, coupon_id = coupon_id)
+    if request.method == 'POST':
+        form = CouponForm(request.POST)
+        if form.is_valid():
+            coupon.coupon_code = form.cleaned_data['coupon_code']
+            coupon.coupon_name = form.cleaned_data['coupon_name']
+            coupon.discount_percentage = form.cleaned_data['discount_percentage']
+            coupon.minimum_purchase = form.cleaned_data['minimum_purchase']
+            coupon.maximum_discount = form.cleaned_data['maximum_discount']
+            coupon.expiry_date = form.cleaned_data['expiry_date']
+
+            coupon.save()
+            messages.success(request, 'Coupon updated successfully')
+            return redirect('coupons')
+        else:
+            messages.error(request, 'Please give the valid inputs')
+    else:
+        form = CouponForm(initial={
+            'coupon_code': coupon.coupon_code,
+            'coupon_name':coupon.coupon_name,
+            'discount_percentage':coupon.discount_percentage,
+            'minimum_purchase':coupon.minimum_purchase,
+            'maximum_discount':coupon.maximum_discount,
+            'expiry_date':coupon.expiry_date
+        })
+    return render(request, 'adminibadi/editCoupon.html', {'form': form, 'coupon': coupon})
+
+
+
+def deleteCoupon(request, coupon_id):
+    if request.method == 'POST':
+        coupon = get_object_or_404(Coupon, coupon_id=coupon_id)
+        coupon.delete()
+        messages.error(request, 'Coopen deleted successfully')
+        return redirect('coupons')
+    return redirect('coupons')
+
+
+
+
+
+
                 
 
 

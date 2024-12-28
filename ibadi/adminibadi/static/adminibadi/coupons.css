@@ -1,0 +1,87 @@
+/* Page Container */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Page Header */
+h2 {
+    color: #343a40; /* Dark Gray */
+    font-weight: bold;
+}
+
+a.btn-primary {
+    font-size: 0.9rem;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+a.btn-primary:hover {
+    background-color: #0056b3; /* Darker Blue */
+    color: white;
+}
+
+/* Coupons Table */
+.table {
+    margin-top: 20px;
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.table thead {
+    background-color: #343a40; /* Dark Gray */
+    color: white;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.1); /* Light Blue Hover */
+    transition: background-color 0.3s ease;
+}
+
+.table td, .table th {
+    vertical-align: middle;
+    text-align: center;
+}
+
+.btn-warning {
+    background-color: #ffc107; /* Yellow */
+    color: black;
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+.btn-warning:hover {
+    background-color: #e0a800; /* Darker Yellow */
+}
+
+.btn-danger {
+    background-color: #dc3545; /* Red */
+    color: white;
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+.btn-danger:hover {
+    background-color: #c82333; /* Darker Red */
+}
+
+/* Status Badge */
+.badge {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: white;
+}
+
+.badge-success {
+    background-color: #28a745; /* Green */
+}
+
+.badge-secondary {
+    background-color: #6c757d; /* Gray */
+}

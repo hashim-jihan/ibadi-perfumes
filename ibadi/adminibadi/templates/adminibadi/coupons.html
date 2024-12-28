@@ -1,0 +1,83 @@
+{% extends 'adminibadi/base.html' %}
+{% load static %}
+
+{% block title %}Ibadi - Manage Coupons{% endblock %}
+
+{% block customCss %}
+<link rel="stylesheet" href="{% static 'adminibadi/coupons.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0 font-weight-bold">Manage Coupons</h2>
+        <a href="{% url 'addCoupon' %}" class="btn btn-primary btn-sm">Add Coupon</a>
+    </div>
+
+    <table class="table table-hover table-bordered align-middle text-center">
+        <thead class="table-dark">
+            <tr>
+                <th>Coupon Code</th>
+                <th>Coupon Name</th>
+                <th>Coupon%</th>
+                <th>Discount</th>
+                <th>Minimum Purchase</th>
+                <th>Expiration Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for coupon in coupons %}
+                <tr>
+                    <td>{{ coupon.coupon_code }}</td>
+                    <td>{{ coupon.coupon_name }}</td>
+                    <td>{{ coupon.discount_percentage }}</td>
+                    <td>₹{{ coupon.discount_amount }}</td>
+                    <td>₹{{ coupon.minimum_purchase }}</td>
+                    <td>{{ coupon.expiry_date|date:"d M Y" }}</td>
+                    <td>
+                        {% if coupon.is_active %}
+                            <span class="badge bg-success">Active</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'editCoupon' coupon.coupon_id %}" class="btn btn-warning btn-sm">Edit</a>
+                        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ coupon.coupon_id }}">
+                            Delete
+                        </button>
+
+                        <!-- Modal -->
+                        <div class="modal fade" id="deleteModal{{ coupon.coupon_id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ coupon.coupon_id }}" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="deleteModalLabel{{ coupon.coupon_id }}">Confirm Deletion</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        Are you sure you want to delete the coupon <strong>{{ coupon.coupon_name }}</strong>?
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <form method="POST" action="{% url 'deleteCoupon' coupon.coupon_id %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger">Delete</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center">No coupons found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

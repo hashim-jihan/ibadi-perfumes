@@ -342,7 +342,6 @@ def shop(request):
 
 
 def productPage(request, product_id, variant_id):
-
     if not request.user.is_authenticated:
         return redirect('userLogin')
 
@@ -641,11 +640,9 @@ def updateCartQuantity(request, product_id):
             else:
                 cartItem.quantity +=1
                 cartItem.save()
-    
         elif action == 'decrease' and cartItem.quantity > 1:
             cartItem.quantity -=1
             cartItem.save()
-        
         return redirect('myCart')
 
 
@@ -661,7 +658,7 @@ def removeFromCart(request, product_id):
 
 
 
-
+@cache_control(no_store=True, must_revalidate=True, no_cache=True)
 def checkoutPage(request):
     if not request.user.is_authenticated:
         return redirect('userLogin')

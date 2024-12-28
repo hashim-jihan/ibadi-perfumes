@@ -74,7 +74,6 @@
     .tab-content.active {
         display: block;
     }
-
     .stock-status {
         font-size: 0.8rem;
         font-weight: 600; 
@@ -116,7 +115,18 @@
         <div class="col-lg-6">
             <div class="product-section">
                 <h1 class="product-title fw-bold text-warning">{{ product.product_name }}</h1>
-                <h3 class="product-price text-white">&#8377; {{ product.selling_price }}</h3>
+                <div class="product-price">
+                    {% if product.regular_price > product.selling_price %}
+                    <span class="text-warning fs-3 fw-bold">
+                        &#8377; {{ product.selling_price }}
+                    </span>
+                    <span class="text-danger fs-4 fw-bold ms-2">
+                        <del>&#8377; {{ product.regular_price }}</del>
+                    </span>
+                    {% else %}
+                    <span class="text-warning fs-3 fw-bold">&#8377; {{ product.selling_price }}</span>
+                    {% endif %}
+                </div>
 
                 <!-- Stock Availability -->
                 <div class="mb-3">

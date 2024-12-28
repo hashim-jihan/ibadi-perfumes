@@ -6,8 +6,9 @@
     <div class="row">
         <!-- Left Section -->
         <div class="col-lg-7">
-            <form method="POST" actoin="{% url 'checkoutPage' %}">
+            <form method="POST" action="{% url 'checkoutPage' %}">
                 {% csrf_token %}
+                
                 <!-- Payment Methods -->
                 <div class="bg-dark text-light rounded shadow p-4 mb-4">
                     <h5 class="text-warning mb-3">Payment Methods</h5>
@@ -28,34 +29,28 @@
                 <!-- Address Section -->
                 <div class="bg-dark text-light rounded shadow p-4 mb-4">
                     <h5 class="text-warning mb-3">Delivery Address</h5>
-                    <div class="row g-3">
+                    <div class="row row-cols-1 row-cols-md-2 g-3">
                         {% for address in userAddresses %}
-                        <div class="col-12">
+                        <div class="col">
                             <div class="card address-card {{ address.shipping_address_id|yesno:'selected-card,' }}">
-                                <div class="card-body d-flex align-items-start">
-                                    <div class="form-check me-3">
+                                <div class="card-body">
+                                    <div class="form-check mb-2">
                                         <input type="radio" class="form-check-input" name="selected_address" id="address{{ address.id }}" value="{{ address.address_id }}">
                                         <label class="form-check-label" for="address{{ address.id }}"></label>
                                     </div>
-                                    <div>
-                                        <h6 class="text-warning mb-1">{{ address.name }}</h6>
-                                        <p class="mb-0 text-white">
-                                            {{ address.address }}<br>
-                                            {{ address.city }}, {{ address.pincode }}<br>
-                                            <strong>Phone:</strong> {{ address.phone }}
-                                        </p>
-                                    </div>
+                                    <h6 class="text-warning mb-1">{{ address.name }}</h6>
+                                    <p class="mb-0 text-white">
+                                        {{ address.address }}<br>
+                                        {{ address.city }}, {{ address.pincode }}<br>
+                                        <strong>Phone:</strong> {{ address.phone }}
+                                    </p>
                                 </div>
                             </div>
                         </div>
                         {% endfor %}
                     </div>
-                    <a href="{% url 'userAddress' %}" class="btn btn-warning btn-sm mt-3">Add New Address</a>
+                    <a href="{% url 'addAddress' %}" class="btn btn-warning btn-sm mt-3">Add New Address</a>
                 </div>
-
-                <!-- Place Order Button -->
-                <button type="submit" class="btn btn-warning w-100">Place Order</button>
-            </form>
         </div>
 
         <!-- Right Section: Order Summary -->
@@ -97,10 +92,18 @@
                     <span><strong>Total Amount:</strong></span>
                     <span><strong>₹{{ cartTotal }}</strong></span>
                 </div>
+
+                <!-- Conditional Buttons -->
+                {% if cartTotal > 0 %}
+                <button type="submit" class="btn btn-warning w-100">Place Order</button>
+                {% else %}
+                <a href="{% url 'shop' %}" class="btn btn-warning w-100">Continue Shopping</a>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
+</form>
 
 <style>
     .bg-dark {
@@ -125,6 +128,7 @@
     .card {
         border: 2px solid transparent;
         background-color: #212529;
+        padding: 10px;
     }
     .card:hover {
         border-color: #ffc107;
@@ -141,6 +145,10 @@
     }
     .text-white {
         color: #fff !important;
+    }
+    .row-cols-1 .col, .row-cols-md-2 .col {
+        flex: 0 0 calc(50% - 1rem);
+        max-width: calc(50% - 1rem);
     }
 </style>
 {% endblock %}

@@ -90,4 +90,35 @@ class ProductImage(models.Model):
         return f'Image for {self.product.product_name}'
 
     class Meta:
-        db_table = 'product_images'
+        db_table = 'product_images' 
+
+
+
+
+class Coupon(models.Model):
+    coupon_id = models.AutoField(primary_key=True)
+    coupon_name = models.CharField(max_length=50, unique=True)
+    coupon_code = models.CharField(max_length=20, unique=True)
+    expiry_date = models.DateTimeField()
+    discount_percentage = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    minimum_purchase = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    maximum_discount = models.DecimalField(max_digits=10, decimal_places=2)
+    used_count = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'coupons'
+
+
+    def save(self,*args, **kwargs):
+        if self.coupon_code:
+            self.coupon_code = self.coupon_code.upper()
+        super().save(*args, **kwargs)
+        
+    def __str__(self):
+        return f'{self.coupon_name} ({self.coupon_code})'
+
+
+
