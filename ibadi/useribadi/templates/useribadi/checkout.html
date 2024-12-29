@@ -8,7 +8,7 @@
         <div class="col-lg-7">
             <form method="POST" action="{% url 'checkoutPage' %}">
                 {% csrf_token %}
-                
+
                 <!-- Payment Methods -->
                 <div class="bg-dark text-light rounded shadow p-4 mb-4">
                     <h5 class="text-warning mb-3">Payment Methods</h5>
@@ -49,14 +49,39 @@
                         </div>
                         {% endfor %}
                     </div>
-                    <a href="{% url 'addAddress' %}" class="btn btn-warning btn-sm mt-3">Add New Address</a>
+                    <a href="{% url 'userAddress' %}" class="btn btn-warning btn-sm mt-3">Add New Address</a>
                 </div>
+
+                <!-- Place Order Button -->
+                {% if cartTotal > 0 %}
+                <button type="submit" class="btn btn-warning w-100">Place Order</button>
+                {% else %}
+                <a href="{% url 'shop' %}" class="btn btn-warning w-100">Continue Shopping</a>
+                {% endif %}
+            </form>
         </div>
 
         <!-- Right Section: Order Summary -->
         <div class="col-lg-5">
             <div class="bg-dark text-light rounded shadow p-4">
                 <h5 class="text-warning mb-4">Order Summary</h5>
+
+                <!-- Apply Coupon Section -->
+                <div class="mb-3">
+                    <form method="POST" action="{% url 'applyCoupon' %}">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="coupon_code" placeholder="Enter Coupon Code">
+                            <button type="submit" class="btn btn-warning">Apply</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- View Coupons Button -->
+                <button type="button" class="btn btn-warning btn-sm mb-3" data-bs-toggle="modal" data-bs-target="#couponsModal">
+                    View Coupons
+                </button>
+
                 {% for item in cartItems %}
                 <div class="d-flex align-items-center mb-3">
                     <!-- Product Image -->
@@ -77,11 +102,15 @@
                 </div>
                 <hr class="bg-secondary">
                 {% endfor %}
-                
+
                 <!-- Subtotal and Total -->
                 <div class="d-flex justify-content-between">
                     <span>Subtotal:</span>
-                    <span>₹{{ cartSubTotal }}</span>
+                    <span id="subtotal">₹{{ cartSubTotal }}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Discount Amount:</span>
+                    <span>₹{{ discount_amount }}</span>
                 </div>
                 <div class="d-flex justify-content-between">
                     <span>Delivery Charge:</span>
@@ -90,20 +119,45 @@
                 <hr class="bg-warning">
                 <div class="d-flex justify-content-between mb-4">
                     <span><strong>Total Amount:</strong></span>
-                    <span><strong>₹{{ cartTotal }}</strong></span>
+                    <span><strong id="totalAmount">₹{{ final_amount }}</strong></span>
                 </div>
-
-                <!-- Conditional Buttons -->
-                {% if cartTotal > 0 %}
-                <button type="submit" class="btn btn-warning w-100">Place Order</button>
-                {% else %}
-                <a href="{% url 'shop' %}" class="btn btn-warning w-100">Continue Shopping</a>
-                {% endif %}
             </div>
         </div>
     </div>
 </div>
-</form>
+
+<!-- Coupons Modal -->
+<div class="modal fade" id="couponsModal" tabindex="-1" aria-labelledby="couponsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header">
+                <h5 class="modal-title text-warning" id="couponsModalLabel">Available Coupons</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if availableCoupons %}
+                <ul class="list-group">
+                    {% for coupon in availableCoupons %}
+                    <li class="list-group-item bg-dark text-light border-warning mb-2">
+                        <p>{{ coupon.coupon_name }}<br>
+                        Code: <strong>{{ coupon.coupon_code }}</strong><br>
+                        discount percentage %{{ coupon.discount_percentage }}%<br>
+                        maximum discount amount ₹{{ coupon.maximum_discount }}<br>
+                        Expires at {{ coupon.expiry_date|date:"d-m-Y" }}<br>
+                        Minumum purchase amount ₹{{ coupon.minimum_purchase }}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-center text-warning">No coupons available at the moment.</p>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <style>
     .bg-dark {
@@ -125,30 +179,29 @@
     .shadow {
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
-    .card {
-        border: 2px solid transparent;
+
+    /* Address Box Styling */
+    .card.address-card {
         background-color: #212529;
+        border: 2px solid #ffc107;
         padding: 10px;
+        color: #ffffff;
+        transition: transform 0.2s, box-shadow 0.2s;
     }
-    .card:hover {
+    .card.address-card:hover {
+        transform: scale(1.02);
+        box-shadow: 0 0 10px #ffc107;
+    }
+    .card.address-card.selected-card {
         border-color: #ffc107;
-    }
-    .form-check-input {
-        margin-top: 7px;
+        box-shadow: 0 0 15px #ffc107;
     }
     .form-check-input:checked {
         background-color: #ffc107;
         border-color: #ffc107;
     }
-    .address-card.selected-card {
-        border-color: #ffc107 !important;
-    }
-    .text-white {
-        color: #fff !important;
-    }
-    .row-cols-1 .col, .row-cols-md-2 .col {
-        flex: 0 0 calc(50% - 1rem);
-        max-width: calc(50% - 1rem);
+    .form-check-input {
+        margin-top: 7px;
     }
 </style>
 {% endblock %}

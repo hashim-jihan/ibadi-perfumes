@@ -35,4 +35,5 @@ urlpatterns = [
     path('wishlist',views.wishlist,name='wishlist'),
     path('removeFromWishlist/<int:product_id>',views.removeFromWishlist,name='removeFromWishlist'),
     path('wallet',views.wallet,name='wallet'),
+    path('applyCoupon', views.applyCoupon,name='applyCoupon'),
 ]

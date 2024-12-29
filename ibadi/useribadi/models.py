@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractBaseUser,BaseUserManager,Permissi
 from django.utils.crypto import get_random_string
 from datetime import datetime,timedelta
 from django.utils.timezone import now
-from adminibadi.models import Product
+from adminibadi.models import Product,Coupon
 
 
 # Create your models here.
@@ -30,6 +30,7 @@ class CustomUserManager(BaseUserManager):
         user.save(using=self._db)
         return user
     
+
 
 class User(AbstractBaseUser, PermissionsMixin):
     full_name = models.CharField(max_length=50)
@@ -131,6 +132,7 @@ class Order(models.Model):
     order_id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User,on_delete=models.CASCADE, related_name='orders')
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     delivery_charge = models.DecimalField(max_digits=10, decimal_places=2)
     final_amount = models.DecimalField(max_digits=10, decimal_places=2)
     payment_method = models.CharField(max_length=20, choices=payment_method_choices)
@@ -162,6 +164,7 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField(default=1)
     final_amount = models.DecimalField(max_digits=10, decimal_places=2)
     is_cancelled = models.BooleanField(default=False)
+    discounted_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     
     class Meta:
         db_table = 'order_items'

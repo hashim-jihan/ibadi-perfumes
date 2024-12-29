@@ -3,8 +3,8 @@ from django.urls import reverse
 from .forms import SignupForm,userLoginForm
 from django.contrib import messages
 import re
-from .models import User
-from adminibadi.models import Product,ProductImage,ProductVariants,Category
+from .models import User,Order,OrderItem
+from adminibadi.models import Product,ProductImage,ProductVariants,Category,Coupon
 from django.core.mail import send_mail
 from django.contrib.auth import authenticate,login,logout,update_session_auth_hash
 from django.contrib.auth.hashers import make_password
@@ -18,6 +18,7 @@ from django.utils.cache import caches
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from .models import Address,Cart,ShippingAddress,Order,OrderItem,Wishlist
+from decimal import Decimal
 
 
 
@@ -593,7 +594,6 @@ def myCart(request):
     cartItemwithSubTotal = []
     for item in cartItems:
         productSubTotal = item.product.selling_price * item.quantity
-
         mainImage = item.product.product_images.filter(is_main=True).first()
 
         variant = None
@@ -658,6 +658,59 @@ def removeFromCart(request, product_id):
 
 
 
+
+
+
+def applyCoupon(request):
+    if request.method == 'POST':
+        coupon_code = request.POST.get('coupon_code').upper()
+        cartItems = Cart.objects.filter(user=request.user)
+        cartSubTotal = sum(item.product.selling_price * item.quantity for item in cartItems)
+        print(coupon_code)
+        print(cartSubTotal)
+
+        try:
+            coupon = Coupon.objects.get(coupon_code=coupon_code)
+
+            if coupon.expiry_date < now():
+                messages.error(request,'Coupon has been expired')
+                return redirect('checkoutPage')
+
+            if cartSubTotal < coupon.minimum_purchase:
+                messages.error(request,f'Your total purchase amount must be at least {coupon.minimum_purchase} to use this coupon')
+                return redirect('checkoutPage')
+            
+            if coupon.discount_percentage:
+                productDiscounts = {}
+                totalDiscount = 0
+
+                for item in cartItems:
+                    productSubTotal = item.product.selling_price * item.quantity
+                    productDiscount = (productSubTotal * coupon.discount_percentage) / 100
+                    productDiscounts [item.id] = round(float(productDiscount), 2)
+                    totalDiscount += productDiscount
+
+                print(productDiscounts)                    
+                discount = min(totalDiscount, coupon.maximum_discount)
+                finalAmount = cartSubTotal - discount
+            
+
+                request.session['applied_coupon'] = {
+                    'coupon_code' : coupon.coupon_code,
+                    'discount_amount':float(discount),
+                    'final_amount':float(finalAmount),
+                    'product_discounts':productDiscounts
+                }
+                messages.success(request, f'Coupon applied ! you saved ₹{discount} Rupees ')
+            else:
+                messages.error(request, 'Invalid discount configuration')
+        except Coupon.DoesNotExist:
+            messages.error(request,'Invalid coupon code, please try again')
+    return redirect('checkoutPage')
+
+
+
+
 @cache_control(no_store=True, must_revalidate=True, no_cache=True)
 def checkoutPage(request):
     if not request.user.is_authenticated:
@@ -687,14 +740,23 @@ def checkoutPage(request):
     deliveryCharge = 50 if cartItems.exists() else 0
     cartTotal = cartSubTotal + deliveryCharge 
 
+    appliedCoupon = request.session.get('applied_coupon',None)
+    if appliedCoupon:
+        discount_amount = appliedCoupon['discount_amount']
+        final_amount = appliedCoupon['final_amount'] + deliveryCharge
+        product_discounts = appliedCoupon.get('product_discounts', {})
+    else:
+        discount_amount = 0
+        final_amount = cartTotal
+        product_discounts={}
 
     userAddress = Address.objects.filter(user=request.user)
+    availableCoupons = Coupon.objects.filter(is_active=True)
+    print(availableCoupons)
 
     if request.method == 'POST':
         payment_method = request.POST.get('payment_method')
         selected_address = request.POST.get('selected_address')
-
-
 
         if not payment_method:
             messages.error(request, 'Please select a payment method')
@@ -703,7 +765,6 @@ def checkoutPage(request):
         if payment_method in ['UPI','ONLINE']:
             messages.error(request, f'{payment_method} yet to be active! Please selcet cash on delivery ')
             return redirect('checkoutPage')
-
 
         if not selected_address:
             messages.error(request,'Please select a delivery address')
@@ -725,16 +786,21 @@ def checkoutPage(request):
             messages.error('Invalid address selected')
             return redirect('checkoutPage')
 
-
-        order = Order.objects.create(user=request.user, total_amount=cartSubTotal, delivery_charge=deliveryCharge, final_amount=cartTotal, payment_method=payment_method, shipping_address=shipping_address)
+        
+        order = Order.objects.create(user=request.user, total_amount=cartSubTotal,discount_amount=discount_amount, delivery_charge=deliveryCharge, final_amount=final_amount, payment_method=payment_method, shipping_address=shipping_address)
 
         for cartItem in cartItems:
+            product_discount = product_discounts.get(str(cartItem.id), 0)
+            print(product_discount)
+            discounted_price = (cartItem.product.selling_price * cartItem.quantity) - Decimal(product_discount)
+
             OrderItem.objects.create(
                 order = order,
                 product = cartItem.product,
                 price = cartItem.product.selling_price,
                 final_amount = cartItem.product.selling_price * cartItem.quantity,
-                quantity = cartItem.quantity
+                quantity = cartItem.quantity,
+                discounted_amount = discounted_price
             )
 
             product = cartItem.product
@@ -743,17 +809,20 @@ def checkoutPage(request):
                 product.save()
 
         cartItems.delete()
+        if 'applied_coupon' in request.session:
+            del request.session['applied_coupon']
         messages.success(request, 'Order placed successfully ')
         return redirect('myOrder')
-            
-
 
     return render(request,'useribadi/checkout.html', {
         'cartItems':cartItemWithSubTotal,
         'cartSubTotal':cartSubTotal,
         'deliveryCharge':deliveryCharge,
         'cartTotal':cartTotal,
-        'userAddresses':userAddress
+        'final_amount':final_amount,
+        'discount_amount':discount_amount,
+        'userAddresses':userAddress,
+        'availableCoupons':availableCoupons
     }) 
 
 
@@ -883,7 +952,6 @@ def removeFromWishlist(request,product_id):
     product.delete()
     messages.error(request,'Prouct removed from your wishlist')
     return redirect('wishlist')
-
 
 
 def wallet(request):

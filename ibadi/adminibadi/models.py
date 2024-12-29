@@ -101,7 +101,6 @@ class Coupon(models.Model):
     coupon_code = models.CharField(max_length=20, unique=True)
     expiry_date = models.DateTimeField()
     discount_percentage = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     minimum_purchase = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     maximum_discount = models.DecimalField(max_digits=10, decimal_places=2)
     used_count = models.PositiveIntegerField(default=0)
