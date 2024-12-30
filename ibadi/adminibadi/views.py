@@ -359,6 +359,7 @@ def productStatus(request,product_id):
     return redirect('productsList')
 
 
+
 def ordersList(request):
     if request.method == 'POST':
         order_id = request.POST.get('order_id')
@@ -373,7 +374,11 @@ def ordersList(request):
         except Order.DoesNotExist:
             return HttpResponse('Order not found',status=404)
     orders = Order.objects.select_related('user').all().order_by('-order_id')
-    return render(request,'adminibadi/orders.html',{'orders':orders})
+
+    paginator = Paginator(orders,10)
+    page_number = request.GET.get('page',1)
+    page_obj = paginator.get_page(page_number)
+    return render(request,'adminibadi/orders.html',{'orders':page_obj})
 
 
 

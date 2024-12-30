@@ -4,6 +4,8 @@ from django.utils.crypto import get_random_string
 from datetime import datetime,timedelta
 from django.utils.timezone import now
 from adminibadi.models import Product,Coupon
+from decimal import Decimal
+import uuid
 
 
 # Create your models here.
@@ -39,7 +41,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_admin = models.BooleanField(default=False)
     otp = models.CharField(max_length=6, blank=True, null=True)
     otp_created_at = models.DateTimeField(blank=True, null=True)  # New field for OTP timestamp
-
 
     objects = CustomUserManager()
 
@@ -121,6 +122,7 @@ class Order(models.Model):
     payment_method_choices = [
         ('COD', 'Cash on Delivery'),
         ('ONLINE', 'Online Payment'),
+        ('WALLET', 'Wallet Payment')
     ]
 
     payment_status_choices = [
@@ -138,7 +140,7 @@ class Order(models.Model):
     payment_method = models.CharField(max_length=20, choices=payment_method_choices)
     payment_status = models.CharField(max_length=20, choices=payment_status_choices, default='pending')
     order_at = models.DateField(auto_now_add=True)
-    order_status = models.CharField(max_length=20,choices=order_status_choices,default='pending')
+    order_status = models.CharField(max_length=50,choices=order_status_choices,default='pending')
     shipping_address = models.ForeignKey(ShippingAddress, on_delete=models.CASCADE)
     original_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
@@ -183,6 +185,57 @@ class Wishlist(models.Model):
     def __str__(self):
         return f'{self.user.full_name} wishlist: {self.Product.product_name}'
 
+
+
+class Wallet(models.Model):
+    TRANSACTION_TYPE_CHOICES = [
+        ('CREDITED', 'Credited'),
+        ('DEBITED', 'Debited'),
+    ]
+    wallet_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    transaction_type = models.CharField(max_length=10, default=TRANSACTION_TYPE_CHOICES)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    current_balance = models.DecimalField(max_digits=10, decimal_places=2)
+    reason = models.TextField()
+    transaction_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+    def save(self, *args, **kwargs):
+        if self.transaction_type == 'Credited':
+            self.current_balance += self.amount
+        elif self.transaction_type == 'Debited':
+            self.current_balance -= self.amount
+
+
+        if self.current_balance < Decimal(0.00):
+            raise ValueError('Wallet amount cannot be negative value')
+        super().save(*args, **kwargs)
+
+    class Meta:
+        db_table = 'wallet'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'Wallet {self.wallet_id} for {self.user.full_name}'    
+
+    
+
+class Payment(models.Model):
+    payment_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    transaction_id = models.CharField(max_length=50, null=True, blank=True)
+    amount_paid = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'payment'
+
+    def __str__(self):
+        return {self.user.full_name}
 
     
 

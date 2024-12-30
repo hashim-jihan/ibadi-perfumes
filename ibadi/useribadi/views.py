@@ -3,7 +3,7 @@ from django.urls import reverse
 from .forms import SignupForm,userLoginForm
 from django.contrib import messages
 import re
-from .models import User,Order,OrderItem
+from .models import User,Order,OrderItem,Payment
 from adminibadi.models import Product,ProductImage,ProductVariants,Category,Coupon
 from django.core.mail import send_mail
 from django.contrib.auth import authenticate,login,logout,update_session_auth_hash
@@ -19,6 +19,13 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from .models import Address,Cart,ShippingAddress,Order,OrderItem,Wishlist
 from decimal import Decimal
+from django.conf import settings
+import pkg_resources
+import razorpay
+import json
+from django.http import JsonResponse
+
+
 
 
 
@@ -304,10 +311,18 @@ def shop(request):
     categories = Category.objects.filter(is_active=True)
     category_filter = request.GET.get('category')
     sort_by = request.GET.get('sort_by')
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
 
     products = Product.objects.filter(is_active=True,variant_id=1).prefetch_related('product_images')
     if category_filter:
         products = products.filter(category__category_name__iexact=category_filter)
+
+    if min_price:
+        products = products.filter(selling_price__gte=min_price)
+    if max_price:
+        products = products.filter(selling_price__lte=max_price) 
+
 
     if sort_by == 'price_asc':
         products = products.order_by('selling_price')
@@ -338,6 +353,8 @@ def shop(request):
         'categories' : categories,
         'selected_category':category_filter,
         'sort_by':sort_by,
+        'min_price' :min_price,
+        'max_price' :max_price,
         })
 
 
@@ -556,6 +573,7 @@ def deleteAddress(request,address_id):
 def addToCart(request, product_id):
     if not request.user.is_authenticated:
         return redirect('userLogin')
+
     
     variant_id = request.POST.get('variant_id')
     product = get_object_or_404(Product,product_id=product_id,variant_id=variant_id)
@@ -588,6 +606,10 @@ def addToCart(request, product_id):
 def myCart(request):
     if not request.user.is_authenticated:
         return redirect('userLogin')
+    
+
+    if 'applied_coupon' in request.session:
+        del request.session['applied_coupon']
     
     cartItems = Cart.objects.filter(user=request.user)
 
@@ -625,6 +647,9 @@ def updateCartQuantity(request, product_id):
     if not request.user.is_authenticated:
         return redirect('userLogin')
     
+    if 'applied_coupon' in request.session:
+        del request.session['applied_coupon']
+    
     if request.method == 'POST':
         action = request.POST.get('action')
         cartItem = get_object_or_404(Cart,product__product_id=product_id, user=request.user)
@@ -651,12 +676,13 @@ def removeFromCart(request, product_id):
     if not request.user.is_authenticated:
         return redirect('userLogin')
     
+    if 'applied_coupon' in request.session:
+        del request.session['applied_coupon']
+    
     product = get_object_or_404(Cart,product_id=product_id, user=request.user)
     product.delete()
     messages.error(request,'Item Removed from cart!')
     return redirect('myCart')
-
-
 
 
 
@@ -711,6 +737,7 @@ def applyCoupon(request):
 
 
 
+
 @cache_control(no_store=True, must_revalidate=True, no_cache=True)
 def checkoutPage(request):
     if not request.user.is_authenticated:
@@ -754,6 +781,8 @@ def checkoutPage(request):
     availableCoupons = Coupon.objects.filter(is_active=True)
     print(availableCoupons)
 
+    payment_method = dict(Order.payment_method_choices)
+
     if request.method == 'POST':
         payment_method = request.POST.get('payment_method')
         selected_address = request.POST.get('selected_address')
@@ -762,7 +791,7 @@ def checkoutPage(request):
             messages.error(request, 'Please select a payment method')
             return redirect('checkoutPage')
 
-        if payment_method in ['UPI','ONLINE']:
+        if payment_method in ['WALLET']:
             messages.error(request, f'{payment_method} yet to be active! Please selcet cash on delivery ')
             return redirect('checkoutPage')
 
@@ -773,46 +802,80 @@ def checkoutPage(request):
         try:
             selected_shipping_address = Address.objects.get(pk=selected_address,user=request.user)
 
-            shipping_address = ShippingAddress.objects.create(
+            shipping_address = ShippingAddress(
                 user = request.user,
                 name = selected_shipping_address.name,
                 address = selected_shipping_address.address,
                 city = selected_shipping_address.city,
                 pincode = selected_shipping_address.pincode,
-                phone = selected_shipping_address.phone
-
+                phone = selected_shipping_address.phone,
+                landmark = selected_shipping_address.landmark
             )
         except Address.DoesNotExist:
             messages.error('Invalid address selected')
             return redirect('checkoutPage')
-
         
-        order = Order.objects.create(user=request.user, total_amount=cartSubTotal,discount_amount=discount_amount, delivery_charge=deliveryCharge, final_amount=final_amount, payment_method=payment_method, shipping_address=shipping_address)
 
-        for cartItem in cartItems:
-            product_discount = product_discounts.get(str(cartItem.id), 0)
-            print(product_discount)
-            discounted_price = (cartItem.product.selling_price * cartItem.quantity) - Decimal(product_discount)
+        if payment_method == 'COD':
+            shipping_address.save()
+            order = Order.objects.create(user=request.user, total_amount=cartSubTotal,discount_amount=discount_amount, delivery_charge=deliveryCharge, final_amount=final_amount, payment_method=payment_method, shipping_address=shipping_address)
+            for cartItem in cartItems:
+                product_discount = product_discounts.get(str(cartItem.id), 0)
+                print(product_discount)
+                discounted_price = (cartItem.product.selling_price * cartItem.quantity) - Decimal(product_discount)
 
-            OrderItem.objects.create(
-                order = order,
-                product = cartItem.product,
-                price = cartItem.product.selling_price,
-                final_amount = cartItem.product.selling_price * cartItem.quantity,
-                quantity = cartItem.quantity,
-                discounted_amount = discounted_price
-            )
+                OrderItem.objects.create(
+                    order = order,
+                    product = cartItem.product,
+                    price = cartItem.product.selling_price,
+                    final_amount = cartItem.product.selling_price * cartItem.quantity,
+                    quantity = cartItem.quantity,
+                    discounted_amount = discounted_price
+                )
 
-            product = cartItem.product
-            if product.quantity >=cartItem.quantity:
-                product.quantity -=cartItem.quantity
-                product.save()
+                product = cartItem.product
+                if product.quantity >=cartItem.quantity:
+                    product.quantity -=cartItem.quantity
+                    product.save()
 
-        cartItems.delete()
-        if 'applied_coupon' in request.session:
-            del request.session['applied_coupon']
-        messages.success(request, 'Order placed successfully ')
-        return redirect('myOrder')
+            cartItems.delete()
+            if 'applied_coupon' in request.session:
+                del request.session['applied_coupon']
+            messages.success(request, 'Order placed successfully ')
+            return redirect('myOrder')
+        
+
+        if payment_method == 'ONLINE':
+            client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+            order_amount = int(float(final_amount * 100))
+            razorpay_order = client.order.create(data={
+                'amount':order_amount,
+                'currency':'INR',
+                'receipt':f'order_rcptid_{request.user.id}',
+            })
+            request.session['payment_info'] = {
+                'final_amount' :float(final_amount),
+                'discount_amount':float(discount_amount),
+                'delivery_charge' : float(deliveryCharge),
+                'cartSubTotal' :float(cartSubTotal),
+                'product_discounts' : appliedCoupon.get('product_discounts', {}),
+                'shipping_address' : {
+                    'name' : selected_shipping_address.name,
+                    'address': selected_shipping_address.address,
+                    'city' : selected_shipping_address.city,
+                    'landmark' : selected_shipping_address.landmark,
+                    'pincode' : selected_shipping_address.pincode,
+                    'phone' : selected_shipping_address.phone,
+
+                },
+                'razorpay_order_id' : razorpay_order['id']
+            }
+            return render(request, 'useribadi/paymentPage.html', {
+                'order_id' : razorpay_order['id'],
+                'razorpay_key' : settings.RAZORPAY_KEY_ID,
+                'amount' : order_amount,
+                'currency' : 'INR',
+            })
 
     return render(request,'useribadi/checkout.html', {
         'cartItems':cartItemWithSubTotal,
@@ -822,8 +885,139 @@ def checkoutPage(request):
         'final_amount':final_amount,
         'discount_amount':discount_amount,
         'userAddresses':userAddress,
-        'availableCoupons':availableCoupons
+        'availableCoupons':availableCoupons,
+        'payment_methods':payment_method
     }) 
+
+
+
+
+@csrf_exempt
+def verifyPayment(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+
+            razorpay_payment_id = data.get('razorpay_payment_id')
+            razorpay_order_id = data.get('razorpay_order_id')
+            razorpay_signature = data.get('razorpay_signature')
+
+            client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+            client.utility.verify_payment_signature({
+                'razorpay_order_id' : razorpay_order_id,
+                'razorpay_payment_id' : razorpay_payment_id,
+                'razorpay_signature' : razorpay_signature,
+            })
+
+            payment_info = request.session.get('payment_info')
+            shipping_data = payment_info['shipping_address']
+            product_discounts = payment_info.get('product_discounts', {})
+
+
+            shipping_address = ShippingAddress.objects.create(
+                user = request.user,
+                name = shipping_data['name'],
+                address = shipping_data['address'],
+                city = shipping_data['city'],
+                pincode = shipping_data['pincode'],
+                phone = shipping_data['phone'],
+                landmark = shipping_data['landmark'],
+            )
+
+            order = Order.objects.create(
+                user = request.user,
+                total_amount = payment_info['cartSubTotal'],
+                discount_amount = payment_info['discount_amount'],
+                delivery_charge = payment_info['delivery_charge'],
+                final_amount=payment_info['final_amount'],
+                payment_method='ONLINE',
+                shipping_address=shipping_address,
+                payment_status='PAID',
+            )
+
+            cartItems = Cart.objects.filter(user=request.user)
+            for cartItem in cartItems:
+                product_discount = Decimal(product_discounts.get(str(cartItem.id), 0))
+                print(product_discount)
+                discounted_price = (cartItem.product.selling_price * cartItem.quantity) - product_discount
+
+                OrderItem.objects.create(
+                    order = order,
+                    product = cartItem.product,
+                    price = cartItem.product.selling_price,
+                    final_amount = cartItem.product.selling_price * cartItem.quantity,
+                    quantity = cartItem.quantity,
+                    discounted_amount = discounted_price
+
+                )
+                product = cartItem.product
+                if product.quantity >= cartItem.quantity:
+                    product.quantity -= cartItem.quantity
+                    product.save()
+
+
+            Payment.objects.create(
+                user=request.user,
+                order=order,
+                transaction_id=razorpay_payment_id,
+                amount_paid=payment_info['final_amount'],
+            )
+
+            cartItems.delete()
+            if 'applied_coupon' in request.session:
+                del request.session['applied_coupon']
+            if 'payment_info' in request.session:
+                del request.session['payment_info']
+
+            return JsonResponse({"message": "Payment verified and order created successfully!"}, status=200)
+        except Exception as e:
+            return JsonResponse({"message": "Payment verification failed!", "error": str(e)}, status=400)
+
+
+
+
+# def createOrder(request):
+#     client = razorpay.Client(auth=(settings.rzp_test_JKtXFtBFc0KVto, settings.YDl0J218MumHRVJbDcC1KKoE))
+
+#     order_amount = 50000
+#     order_currency = 'INR'
+#     order_receipt = 'order_rcptid_11'
+
+#     order_data = {
+#         'amount' : order_amount,
+#         'currency' : order_currency,
+#         'receipt' : order_receipt,
+#     }
+
+#     order = client.order.create(data=order_data)
+#     context = {
+#         'order_id':order['id'],
+#         'razorpay_key': settings.RAZORPAY_KEY_ID,
+#         'amount':order_amount,
+#         'currency':order_currency
+#     }
+#     return render(request,'useribadi/paymentPage.html', context)
+
+
+
+# def verifyPayment(request):
+#     if request.method == 'POST':
+#         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+#         payemnt_id = request.POST.get('razorpay_payment_id')
+#         order_id = request.POST.get('razorpay_order_id')
+#         signature = request.POST.get('razorpay_signature')
+
+#         try:
+#             client.utility.verify_payment_signature({
+#                 'razorpay_order_id' : order_id,
+#                 'razorpay_payment_id': payemnt_id,
+#                 'razorpay_signature' :signature
+#             })
+
+#             return JsonResponse({'status' : 'success'})
+#         except razorpay.errors.SignatureVerificationError:
+#             return JsonResponse({'status' : 'failure'})
 
 
 
@@ -956,6 +1150,10 @@ def removeFromWishlist(request,product_id):
 
 def wallet(request):
     return render(request,'useribadi/wallet.html')
+
+
+
+
     
 
 

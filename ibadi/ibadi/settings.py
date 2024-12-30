@@ -143,3 +143,9 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'ibadiperfumes111@gmail.com'  # Your email address
 EMAIL_HOST_PASSWORD = 'gosxbvicdkntxmso'  # Your email password (consider using environment variables)
+
+
+RAZORPAY_KEY_ID = 'rzp_test_JKtXFtBFc0KVto'
+RAZORPAY_KEY_SECRET = 'YDl0J218MumHRVJbDcC1KKoE'
+
+SECURE_CROSS_ORIGIN_OPENER_POLICY="same-orgin-allow-popups"

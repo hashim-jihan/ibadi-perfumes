@@ -12,18 +12,12 @@
                 <!-- Payment Methods -->
                 <div class="bg-dark text-light rounded shadow p-4 mb-4">
                     <h5 class="text-warning mb-3">Payment Methods</h5>
+                    {% for key, value in payment_methods.items %}
                     <div class="form-check mb-2">
-                        <input type="radio" class="form-check-input" name="payment_method" id="netBanking" value="ONLINE">
-                        <label class="form-check-label" for="netBanking">Net Banking</label>
+                        <input type="radio" class="form-check-input" name="payment_method" id="{{ key }}" value="{{ key }}">
+                        <label class="form-check-label" for="{{ key }}">{{ value }}</label>
                     </div>
-                    <div class="form-check mb-2">
-                        <input type="radio" class="form-check-input" name="payment_method" id="upi" value="UPI">
-                        <label class="form-check-label" for="upi">UPI</label>
-                    </div>
-                    <div class="form-check mb-2">
-                        <input type="radio" class="form-check-input" name="payment_method" id="cashOnDelivery" value="COD">
-                        <label class="form-check-label" for="cashOnDelivery">Cash on Delivery</label>
-                    </div>
+                    {% endfor %}
                 </div>
 
                 <!-- Address Section -->
@@ -144,7 +138,7 @@
                         discount percentage %{{ coupon.discount_percentage }}%<br>
                         maximum discount amount ₹{{ coupon.maximum_discount }}<br>
                         Expires at {{ coupon.expiry_date|date:"d-m-Y" }}<br>
-                        Minumum purchase amount ₹{{ coupon.minimum_purchase }}
+                        Minimum purchase amount ₹{{ coupon.minimum_purchase }}
                     </li>
                     {% endfor %}
                 </ul>

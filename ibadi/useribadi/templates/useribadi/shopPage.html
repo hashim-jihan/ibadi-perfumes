@@ -21,6 +21,7 @@
                         </div>
                         {% endfor %}
                     </div>
+
                     <div class="filter-group mt-4">
                         <h6 class="text-warning">Sort By</h6>
                         <select class="form-select" name="sort_by">
@@ -31,6 +32,17 @@
                             <option value="name_desc" {% if sort_by == "name_desc" %}selected{% endif %}>Name: Z to A</option>
                         </select>
                     </div>
+
+                    <div class="filter-group mt-4">
+                        <h6 class="text-warning">Price Range</h6>
+                        <div class="d-flex gap-2">
+                            <input type="number" name="min_price" class="form-control" placeholder="Min" 
+                                value="{{ min_price|default:'' }}">
+                            <input type="number" name="max_price" class="form-control" placeholder="Max" 
+                                value="{{ max_price|default:'' }}">
+                        </div>
+                    </div>
+
                     <button type="submit" class="btn btn-warning w-100 mt-4">Apply Filters</button>
                 </form>
             </div>
