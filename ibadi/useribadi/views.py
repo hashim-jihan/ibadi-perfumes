@@ -3,7 +3,8 @@ from django.urls import reverse
 from .forms import SignupForm,userLoginForm
 from django.contrib import messages
 import re
-from .models import User,Order,OrderItem,Payment
+from django.core.exceptions import ObjectDoesNotExist
+from .models import User,Order,OrderItem,Payment, Wallet
 from adminibadi.models import Product,ProductImage,ProductVariants,Category,Coupon
 from django.core.mail import send_mail
 from django.contrib.auth import authenticate,login,logout,update_session_auth_hash
@@ -858,7 +859,7 @@ def checkoutPage(request):
                 'discount_amount':float(discount_amount),
                 'delivery_charge' : float(deliveryCharge),
                 'cartSubTotal' :float(cartSubTotal),
-                'product_discounts' : appliedCoupon.get('product_discounts', {}),
+                'product_discounts' : product_discounts,
                 'shipping_address' : {
                     'name' : selected_shipping_address.name,
                     'address': selected_shipping_address.address,
@@ -1045,35 +1046,37 @@ def myOrder(request):
 
 
 
-def removeProductFromOrder(request,order_item_id):
-    if not request.user.is_authenticated:
-        return redirect('userLogin')
+
+# def removeProductFromOrder(request,order_item_id):
+#     if not request.user.is_authenticated:
+#         return redirect('userLogin')
     
-    orderItem = get_object_or_404(OrderItem, order_item_id=order_item_id)
+#     orderItem = get_object_or_404(OrderItem, order_item_id=order_item_id)
 
-    if orderItem.is_cancelled:
-        messages(request, 'This product is already cancelled')
+#     if orderItem.is_cancelled:
+#         messages.error(request, 'This product is already cancelled')
 
-    product = orderItem.product
-    product.quantity += orderItem.quantity
-    product.save()
+#     product = orderItem.product
+#     product.quantity += orderItem.quantity
+#     product.save()
 
-    orderItem.is_cancelled = True
-    orderItem.save()
+#     orderItem.is_cancelled = True
+#     orderItem.save()
 
-    order = orderItem.order
+#     order = orderItem.order
 
-    allItems = OrderItem.objects.filter(order=order)
-    remainingItems = [item for item in allItems if not item.is_cancelled]
-    if remainingItems:
-        order.final_amount -=orderItem.price
-    else:
-        order.order_status = 'Cancelled'
-        order.final_amount = order.original_amount
+#     allItems = OrderItem.objects.filter(order=order)
+#     remainingItems = [item for item in allItems if not item.is_cancelled]
+#     if remainingItems:
+#         order.final_amount -=orderItem.price
+#     else:
+#         order.order_status = 'Cancelled'
+#         order.final_amount = order.original_amount
 
-    order.save()
-    messages.success(request, f'The Product {orderItem.product.product_name} has been removed from your order!')
-    return redirect('myOrder')
+#     order.save()
+#     messages.success(request, f'The Product {orderItem.product.product_name} has been removed from your order!')
+#     return redirect('myOrder')
+
 
 
 
@@ -1097,10 +1100,36 @@ def cancelOrder(request,order_id):
             order.order_status = 'Cancelled'
             order.final_amount = order.original_amount
             order.save()
-            messages.success(request, 'You order has been cancelled succussfully ')
+            
+            if order.payment_method == 'ONLINE':
+                try:
+                    latestWalletEntry =Wallet.objects.filter(user=request.user).order_by('-created_at').first()
+                    currentBalance = latestWalletEntry.current_balance if latestWalletEntry else Decimal(0)
+                    updatedBalance = currentBalance + order.final_amount
+
+                    print(latestWalletEntry)
+                    print(currentBalance)
+                    print(updatedBalance)
+
+
+                    Wallet.objects.create(
+                        user=request.user,
+                        transaction_type = 'CREDITED',
+                        order = order,
+                        amount = order.final_amount,
+                        current_balance = updatedBalance,
+                        reason = f'Refund for cancelled order {order.order_id}'
+                    )
+                    messages.success(request,f'The amount ₹{order.final_amount} has been refunded to your wallet')
+                except ObjectDoesNotExist:
+                    messages.error(request, 'No wallet found for this user. Please contact support.')
+            else:
+                messages.error(request,'Your order has been cancelled successfully.')
         else:
-            messages.error(request,'This order cannot be cancelled ')
+            messages.error(request, 'This order cannot be cancelled.')
         return redirect('myOrder')
+    
+
     
 def addToWishlist(request,product_id):
     if not request.user.is_authenticated:
@@ -1148,8 +1177,13 @@ def removeFromWishlist(request,product_id):
     return redirect('wishlist')
 
 
+
+
 def wallet(request):
-    return render(request,'useribadi/wallet.html')
+    walletTransactions = Wallet.objects.filter(user=request.user).order_by('-created_at')
+
+    currentBalance = walletTransactions.first().current_balance if walletTransactions.exists() else 0.00
+    return render(request,'useribadi/wallet.html', {'current_balance' : currentBalance, 'wallet_transactions': walletTransactions})
 
 
 

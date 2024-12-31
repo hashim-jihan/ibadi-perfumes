@@ -1,0 +1,149 @@
+{% extends 'adminibadi/base.html' %}
+{% load static %}
+
+{% block title %}Ibadi - Sales Report{% endblock %}
+
+{% block customCss %}
+{% comment %} <link rel="stylesheet" href="{% static 'adminibadi/sales_report.css' %}"> {% endcomment %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Filter Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0 font-weight-bold">Sales Report</h2>
+        <div class="d-flex">
+            <button class="btn btn-primary me-2">Download PDF</button>
+            <button class="btn btn-secondary">Download Excel</button>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" action="{% url 'salesReport' %}">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="filter-type" class="form-label">Filter By</label>
+                        <select id="filter-type" name="filter_type" class="form-select">
+                            <option value="daily" {% if filter_type == 'daily' %}selected{% endif %}>Daily</option>
+                            <option value="weekly" {% if filter_type == 'weekly' %}selected{% endif %}>Weekly</option>
+                            <option value="monthly" {% if filter_type == 'monthly' %}selected{% endif %}>Monthly</option>
+                            <option value="custom" {% if filter_type == 'custom' %}selected{% endif %}>Custom Range</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="start-date" class="form-label">From</label>
+                        <input type="date" id="start-date" name="start_date" class="form-control" {% if filter_type == 'custom' %}enabled{% else %}disabled{% endif %} value="{{ start_date }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="end-date" class="form-label">To</label>
+                        <input type="date" id="end-date" name="end_date" class="form-control" {% if filter_type == 'custom' %}enabled{% else %}disabled{% endif %} value="{{ end_date }}">
+                    </div>
+                </div>
+                <div class="text-end mt-3">
+                    <button class="btn btn-success">Generate Report</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sales Summary Section -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Overall Sales Count</h5>
+                    <p class="card-text h4">{{ overall_sales_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Overall Order Amount</h5>
+                    <p class="card-text h4">₹{{ overall_order_amount }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Overall Discount</h5>
+                    <p class="card-text h4">₹{{ overall_discount }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orders Table Section -->
+    <div class="table-responsive">
+        <table class="table table-hover table-bordered align-middle text-center">
+            <thead class="table-dark">
+                <tr>
+                    <th>Order ID</th>
+                    <th>Date</th>
+                    <th>Customer Name</th>
+                    <th>Order Status</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in page_obj.object_list %}
+                    <tr>
+                        <td>{{ order.order_id }}</td>
+                        <td>{{ order.order_at|date:"d M Y" }}</td>
+                        <td>{{ order.user.full_name }}</td>
+                        <td>
+                            <span class="badge {% if order.order_status == 'DELIVERED' %}bg-success{% elif order.order_status == 'PENDING' %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ order.get_order_status_display }}
+                            </span>
+                        </td>
+                        <td>₹{{ order.final_amount }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">No orders found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="d-flex justify-content-center mt-4">
+        <nav>
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1&filter_type={{ filter_type }}&start_date={{ start_date }}&end_date={{ end_date }}" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&filter_type={{ filter_type }}&start_date={{ start_date }}&end_date={{ end_date }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+                
+                <li class="page-item disabled">
+                    <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                </li>
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}&filter_type={{ filter_type }}&start_date={{ start_date }}&end_date={{ end_date }}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&filter_type={{ filter_type }}&start_date={{ start_date }}&end_date={{ end_date }}" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endblock %}

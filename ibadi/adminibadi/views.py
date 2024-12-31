@@ -10,6 +10,9 @@ from django.db.models import Q
 from adminibadi.models import Category,Product,ProductImage,ProductVariants,Coupon
 from django.views.decorators.cache import cache_control
 from django.contrib.auth.decorators import login_required
+from datetime import datetime, timedelta
+from django.db.models import Sum,Count
+
 
 
 
@@ -521,6 +524,47 @@ def deleteCoupon(request, coupon_id):
         messages.error(request, 'Coopen deleted successfully')
         return redirect('coupons')
     return redirect('coupons')
+
+
+
+def salesReport(request):
+    filterType = request.GET.get('filter_type', 'daily')
+    # startdate = request.GET.get('start_date', None)
+    # endDate = request.GET.get('end_date', None)
+
+    orders = Order.objects.all().order_by('-order_id')
+
+    # if startdate and endDate:
+    #     orders = orders.filter(order_at__range=[startdate, endDate])
+
+    if filterType == 'daily':
+        today = datetime.today()
+        orders = orders.filter(order_at__year=today.year, order_at__month=today.month, order_at__day=today.day)
+    elif filterType == 'weekly':
+        startOfWeek = datetime.today() - timedelta(days=7)
+        orders = orders.filter(order_at__gte=startOfWeek)
+    elif  filterType == 'monthly':
+        stratOfMonth = datetime.today() - timedelta(days=30)
+        orders = orders.filter(order_at__gte=stratOfMonth)
+
+    
+    paginator = Paginator(orders, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+
+    overallSalesCount = orders.count()
+    overallOrderAmount = orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+    overallDiscount = orders.aggregate(Sum('discount_amount'))['discount_amount__sum'] or 0
+    return render(request, 'adminibadi/salesReport.html',{
+        'page_obj' : page_obj,
+        'overall_sales_count' : overallSalesCount,
+        'overall_order_amount' : overallOrderAmount,
+        'overall_discount' : overallDiscount,
+        'filter_type' : filterType
+    })
+
+
 
 
 
