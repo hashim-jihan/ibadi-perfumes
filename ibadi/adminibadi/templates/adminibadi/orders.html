@@ -21,6 +21,7 @@
                 <th>Status</th>
                 <th>Ordered At</th>
                 <th>Update Status</th>
+                <th>Details</th>
             </tr>
         </thead>
         <tbody>
@@ -29,10 +30,14 @@
                     <td>{{ order.order_id }}</td>
                     <td>{{ order.user.full_name }}</td>
                     <td>₹{{ order.final_amount }}</td>
-                    
+
                     <!-- Current Status -->
                     <td>
-                        <span class="badge bg-info text-dark">{{ order.get_order_status_display }}</span>
+                        {% if order.order_status == 'Return Requested' %}
+                            <span class="badge bg-danger text-white">{{ order.get_order_status_display }}</span>
+                        {% else %}
+                            <span class="badge bg-info text-dark">{{ order.get_order_status_display }}</span>
+                        {% endif %}
                     </td>
 
                     <!-- Ordered At -->
@@ -48,20 +53,26 @@
                                 <select name="order_status" class="form-select form-select-sm"
                                     {% if order.order_status == 'DELIVERED' or order.order_status == 'CANCELLED' or order.order_status == 'Cancelled' %}disabled{% endif %}>
                                     {% for status, display in order.order_status_choices %}
+                                        {% if status != 'Cancelled' and status != 'CANCELLED' %}
                                         <option value="{{ status }}" 
                                             {% if order.order_status == status %}selected{% endif %}
-                                            {% if order.order_status == 'DELIVERED' or order.order_status == 'CANCELLED' or order.order_status == 'Cancelled' and status != order.order_status %}disabled{% endif %}>
+                                            {% if order.order_status == 'DELIVERED' or order.order_status == 'CANCELLED' or order.order_status == 'Cancelled' or order.order_status == 'Returned' or order.order_status == 'Return Rejected' and status != order.order_status %}disabled{% endif %}>
                                             {{ display }}
                                         </option>
+                                        {% endif %}
                                     {% endfor %}
                                 </select>
                     
                                 <button type="submit" class="btn btn-sm btn-success" 
-                                    {% if order.order_status == 'DELIVERED' or order.order_status == 'CANCELLED' or order.order_status == 'Cancelled'  %}disabled{% endif %}>
+                                    {% if order.order_status == 'DELIVERED' or order.order_status == 'CANCELLED' or order.order_status == 'Cancelled' or order.order_status == 'Returned'  %}disabled{% endif %}>
                                     Update
                                 </button>
                             </div>
                         </form>
+                    </td>
+
+                    <td>
+                        <a href="{% url 'orderDetails' order.order_id %}" class="btn btn-sm btn-primary">View</a>
                     </td>
                 </tr>
             {% empty %}

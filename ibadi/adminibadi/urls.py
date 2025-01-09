@@ -17,6 +17,7 @@ urlpatterns = [
     path('editProduct/<int:product_id>/',views.editProduct,name='editProduct'),
     path('productStatus/<int:product_id>/',views.productStatus,name='productStatus'),
     path('ordersList',views.ordersList,name='ordersList'),
+    path('orderDetails/<int:order_id>',views.orderDetails,name='orderDetails'),
     path('addProductOffer/<int:product_id>',views.addProductOffer,name='addProductOffer'),
     path('addCategoryOffer/<int:category_id>',views.addCategoryOffer,name='addCategoryOffer'),
     path('coupons',views.coupons,name='coupons'),
@@ -24,4 +25,6 @@ urlpatterns = [
     path('editCoupon/<int:coupon_id>',views.editCoupon,name='editCoupon'),
     path('deleteCoupon/<int:coupon_id>',views.deleteCoupon,name='deleteCoupon'),
     path('salesReport/',views.salesReport,name='salesReport'),
+    path('acceptReturn/<int:order_id>',views.acceptReturn,name='acceptReturn'),
+    path('rejectReturn/<int:order_id>',views.rejectReturn,name='rejectReturn'),
 ]

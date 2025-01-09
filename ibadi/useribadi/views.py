@@ -1,5 +1,6 @@
-from django.shortcuts import render,redirect,get_object_or_404
+from django.shortcuts import render,redirect,get_object_or_404,HttpResponse
 from django.urls import reverse
+import razorpay.errors
 from .forms import SignupForm,userLoginForm
 from django.contrib import messages
 import re
@@ -25,8 +26,8 @@ import pkg_resources
 import razorpay
 import json
 from django.http import JsonResponse
-
-
+from django.template.loader import render_to_string
+from xhtml2pdf import pisa
 
 
 
@@ -314,8 +315,14 @@ def shop(request):
     sort_by = request.GET.get('sort_by')
     min_price = request.GET.get('min_price')
     max_price = request.GET.get('max_price')
+    searchQuery = request.GET.get('search_query')
 
     products = Product.objects.filter(is_active=True,variant_id=1).prefetch_related('product_images')
+
+
+    if searchQuery:
+        products = products.filter(product_name__icontains=searchQuery)
+
     if category_filter:
         products = products.filter(category__category_name__iexact=category_filter)
 
@@ -356,6 +363,7 @@ def shop(request):
         'sort_by':sort_by,
         'min_price' :min_price,
         'max_price' :max_price,
+        'search_query':searchQuery
         })
 
 
@@ -791,6 +799,10 @@ def checkoutPage(request):
         if not payment_method:
             messages.error(request, 'Please select a payment method')
             return redirect('checkoutPage')
+        
+        if payment_method == 'COD' and final_amount > 1000:
+            messages.error(request,'Cash on Delivery is not available for orders above ₹1000')
+            return redirect('checkoutPage')
 
         if payment_method in ['WALLET']:
             messages.error(request, f'{payment_method} yet to be active! Please selcet cash on delivery ')
@@ -819,7 +831,7 @@ def checkoutPage(request):
 
         if payment_method == 'COD':
             shipping_address.save()
-            order = Order.objects.create(user=request.user, total_amount=cartSubTotal,discount_amount=discount_amount, delivery_charge=deliveryCharge, final_amount=final_amount, payment_method=payment_method, shipping_address=shipping_address)
+            order = Order.objects.create(user=request.user, total_amount=cartSubTotal,discount_amount=discount_amount, delivery_charge=deliveryCharge, final_amount=final_amount, payment_method=payment_method,shipping_address=shipping_address)
             for cartItem in cartItems:
                 product_discount = product_discounts.get(str(cartItem.id), 0)
                 print(product_discount)
@@ -854,23 +866,42 @@ def checkoutPage(request):
                 'currency':'INR',
                 'receipt':f'order_rcptid_{request.user.id}',
             })
-            request.session['payment_info'] = {
-                'final_amount' :float(final_amount),
-                'discount_amount':float(discount_amount),
-                'delivery_charge' : float(deliveryCharge),
-                'cartSubTotal' :float(cartSubTotal),
-                'product_discounts' : product_discounts,
-                'shipping_address' : {
-                    'name' : selected_shipping_address.name,
-                    'address': selected_shipping_address.address,
-                    'city' : selected_shipping_address.city,
-                    'landmark' : selected_shipping_address.landmark,
-                    'pincode' : selected_shipping_address.pincode,
-                    'phone' : selected_shipping_address.phone,
 
-                },
-                'razorpay_order_id' : razorpay_order['id']
-            }
+            shipping_address.save()
+            order = Order.objects.create(
+                user=request.user, 
+                total_amount=cartSubTotal,
+                discount_amount=discount_amount, 
+                delivery_charge=deliveryCharge, 
+                final_amount=final_amount, 
+                payment_method=payment_method,
+                shipping_address=shipping_address,
+                razorpay_order_id=razorpay_order['id'],
+                )
+            
+            for cartItem in cartItems:
+                product_discount = product_discounts.get(str(cartItem.id), 0)
+                print(product_discount)
+                discounted_price = (cartItem.product.selling_price * cartItem.quantity) - Decimal(product_discount)
+
+                OrderItem.objects.create(
+                    order = order,
+                    product = cartItem.product,
+                    price = cartItem.product.selling_price,
+                    final_amount = cartItem.product.selling_price * cartItem.quantity,
+                    quantity = cartItem.quantity,
+                    discounted_amount = discounted_price
+                )
+
+                product = cartItem.product
+                if product.quantity >=cartItem.quantity:
+                    product.quantity -=cartItem.quantity
+                    product.save()
+
+            cartItems.delete()
+            if 'applied_coupon' in request.session:
+                del request.session['applied_coupon']
+
             return render(request, 'useribadi/paymentPage.html', {
                 'order_id' : razorpay_order['id'],
                 'razorpay_key' : settings.RAZORPAY_KEY_ID,
@@ -898,6 +929,7 @@ def verifyPayment(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
+            print('success aan')
 
             razorpay_payment_id = data.get('razorpay_payment_id')
             razorpay_order_id = data.get('razorpay_order_id')
@@ -910,115 +942,66 @@ def verifyPayment(request):
                 'razorpay_payment_id' : razorpay_payment_id,
                 'razorpay_signature' : razorpay_signature,
             })
-
-            payment_info = request.session.get('payment_info')
-            shipping_data = payment_info['shipping_address']
-            product_discounts = payment_info.get('product_discounts', {})
-
-
-            shipping_address = ShippingAddress.objects.create(
-                user = request.user,
-                name = shipping_data['name'],
-                address = shipping_data['address'],
-                city = shipping_data['city'],
-                pincode = shipping_data['pincode'],
-                phone = shipping_data['phone'],
-                landmark = shipping_data['landmark'],
-            )
-
-            order = Order.objects.create(
-                user = request.user,
-                total_amount = payment_info['cartSubTotal'],
-                discount_amount = payment_info['discount_amount'],
-                delivery_charge = payment_info['delivery_charge'],
-                final_amount=payment_info['final_amount'],
-                payment_method='ONLINE',
-                shipping_address=shipping_address,
-                payment_status='PAID',
-            )
-
-            cartItems = Cart.objects.filter(user=request.user)
-            for cartItem in cartItems:
-                product_discount = Decimal(product_discounts.get(str(cartItem.id), 0))
-                print(product_discount)
-                discounted_price = (cartItem.product.selling_price * cartItem.quantity) - product_discount
-
-                OrderItem.objects.create(
-                    order = order,
-                    product = cartItem.product,
-                    price = cartItem.product.selling_price,
-                    final_amount = cartItem.product.selling_price * cartItem.quantity,
-                    quantity = cartItem.quantity,
-                    discounted_amount = discounted_price
-
-                )
-                product = cartItem.product
-                if product.quantity >= cartItem.quantity:
-                    product.quantity -= cartItem.quantity
-                    product.save()
-
+            print('shahal')
+            order = Order.objects.filter(razorpay_order_id=razorpay_order_id).first()
+            print('problemmmmmm')
+            if not order:
+                return JsonResponse({'message':'Order not found'}, status=404)
+            order.payment_status = 'PAID'
+            order.save()
 
             Payment.objects.create(
                 user=request.user,
                 order=order,
                 transaction_id=razorpay_payment_id,
-                amount_paid=payment_info['final_amount'],
+                amount_paid=order.final_amount,
             )
 
-            cartItems.delete()
+            Cart.objects.filter(user=request.user).delete()
             if 'applied_coupon' in request.session:
                 del request.session['applied_coupon']
-            if 'payment_info' in request.session:
-                del request.session['payment_info']
 
-            return JsonResponse({"message": "Payment verified and order created successfully!"}, status=200)
+            return JsonResponse({"message": "Payment verified and order created successfully!"}, status=200)    
         except Exception as e:
-            return JsonResponse({"message": "Payment verification failed!", "error": str(e)}, status=400)
+            print('failed aan')  
+            order = Order.objects.filter(razorpay_order_id=data.get('razorpay_order_id')).first()
+            if order:
+                order.payment_status = 'PENDING'
+                order.save()
+
+            return JsonResponse({
+                "message": "Payment verification failed!",
+                "error": str(e),
+                "redirect_url":"/myOrder"
+            }, status=400)
 
 
 
 
-# def createOrder(request):
-#     client = razorpay.Client(auth=(settings.rzp_test_JKtXFtBFc0KVto, settings.YDl0J218MumHRVJbDcC1KKoE))
+def retryPayment(request,order_id):
+    order = Order.objects.get(order_id=order_id)
+    if not order or order.payment_status != 'PENDING':
+        messages.error(request, 'This order is not allowed for Retrying payment')
+        return redirect('myOrder')
+    
+    client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+    order_amount = int(order.final_amount * 100)
 
-#     order_amount = 50000
-#     order_currency = 'INR'
-#     order_receipt = 'order_rcptid_11'
+    razorpay_order = client.order.create(data={
+        'amount':order_amount,
+        'currency':'INR',
+        'receipt': f'order_rcptid_{order.order_id}'
+    })
 
-#     order_data = {
-#         'amount' : order_amount,
-#         'currency' : order_currency,
-#         'receipt' : order_receipt,
-#     }
+    order.razorpay_order_id = razorpay_order['id']
+    order.save()
+    return render(request,'useribadi/paymentPage.html',{
+        'order_id': razorpay_order['id'],
+        'razorpay_key': settings.RAZORPAY_KEY_ID,
+        'amount': order_amount,
+        'currency': 'INR',
+    })
 
-#     order = client.order.create(data=order_data)
-#     context = {
-#         'order_id':order['id'],
-#         'razorpay_key': settings.RAZORPAY_KEY_ID,
-#         'amount':order_amount,
-#         'currency':order_currency
-#     }
-#     return render(request,'useribadi/paymentPage.html', context)
-
-
-
-# def verifyPayment(request):
-#     if request.method == 'POST':
-#         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
-#         payemnt_id = request.POST.get('razorpay_payment_id')
-#         order_id = request.POST.get('razorpay_order_id')
-#         signature = request.POST.get('razorpay_signature')
-
-#         try:
-#             client.utility.verify_payment_signature({
-#                 'razorpay_order_id' : order_id,
-#                 'razorpay_payment_id': payemnt_id,
-#                 'razorpay_signature' :signature
-#             })
-
-#             return JsonResponse({'status' : 'success'})
-#         except razorpay.errors.SignatureVerificationError:
-#             return JsonResponse({'status' : 'failure'})
 
 
 
@@ -1038,7 +1021,8 @@ def myOrder(request):
         orderWithItems.append({
             'order':order,
             'items':items,
-            'order_status':order.get_order_status_display()
+            'order_status':order.get_order_status_display(),
+            'payment_status':order.get_payment_status_display()
         })
 
     return render(request,'useribadi/myOrder.html',{'orders':orderWithItems})
@@ -1084,10 +1068,9 @@ def myOrder(request):
 def cancelOrder(request,order_id):
     if not request.user.is_authenticated:
         return redirect('userLogin')
-    
     if request.method == 'POST':
         order = get_object_or_404(Order,order_id=order_id, user=request.user)
-        if order.order_status in ['pending','SHIPPED']:
+        if order.order_status in ['PENDING','SHIPPED']:
             orderItems = OrderItem.objects.filter(order=order)
             for orderItem in orderItems:
                 if not orderItem.is_cancelled:
@@ -1106,10 +1089,13 @@ def cancelOrder(request,order_id):
                     latestWalletEntry =Wallet.objects.filter(user=request.user).order_by('-created_at').first()
                     currentBalance = latestWalletEntry.current_balance if latestWalletEntry else Decimal(0)
                     updatedBalance = currentBalance + order.final_amount
+                    order.payment_status = 'REFUNDED'
+                    order.save()
 
                     print(latestWalletEntry)
                     print(currentBalance)
                     print(updatedBalance)
+                    print(order.payment_status)
 
 
                     Wallet.objects.create(
@@ -1130,7 +1116,27 @@ def cancelOrder(request,order_id):
         return redirect('myOrder')
     
 
+
+def returnProduct(request,order_id):
+    if not request.user.is_authenticated:
+        return redirect('userLogin')
     
+    if request.method == 'POST':
+        order = get_object_or_404(Order, order_id=order_id, user=request.user)
+
+        if order.order_status == 'DELIVERED':
+            reason = request.POST.get('return_reason')
+            order.return_reason = reason
+            order.order_status = 'Return Requested'
+            order.save()
+            messages.success(request, 'Your return request has been submitted succeffully')
+        else:
+            messages.error(request, 'This order cannot be returned')
+    return redirect('myOrder')
+
+
+    
+
 def addToWishlist(request,product_id):
     if not request.user.is_authenticated:
         return redirect('userLogin')
@@ -1178,12 +1184,25 @@ def removeFromWishlist(request,product_id):
 
 
 
-
 def wallet(request):
     walletTransactions = Wallet.objects.filter(user=request.user).order_by('-created_at')
-
     currentBalance = walletTransactions.first().current_balance if walletTransactions.exists() else 0.00
     return render(request,'useribadi/wallet.html', {'current_balance' : currentBalance, 'wallet_transactions': walletTransactions})
+
+
+
+def invoicePdf(request,order_id):
+    order = Order.objects.get(order_id=order_id)
+    html = render_to_string('useribadi/invoicePdf.html',{'order':order})
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="Invoice_{order.order_id}.pdf"'
+    
+    pisa_status = pisa.CreatePDF(html,dest=response)
+    if pisa_status.err:
+        return HttpResponse('Error generating PDF', status=500)
+    return response
+
 
 
 

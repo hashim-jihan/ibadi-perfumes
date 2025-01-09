@@ -120,15 +120,96 @@
         <button id="rzp-button1">Pay Now</button>
     </div>
 
-    <!-- Modal -->
+    <!-- Success Modal -->
     <div class="modal" id="success-modal">
         <div class="modal-content">
             <h2>Payment Successful!</h2>
             <p>Your payment has been verified successfully. Thank you for your purchase!</p>
-            <button class="close-modal" onclick="closeModal()">OK</button>
+            <button class="close-modal" onclick="redirectToOrders()">OK</button>
         </div>
     </div>
 
+    <!-- Failure Modal -->
+    <div class="modal" id="failure-modal">
+        <div class="modal-content">
+            <h2>Payment Failed!</h2>
+            <p>Unfortunately, your payment could not be verified. Please try again or contact support.</p>
+            <button class="close-modal" onclick="redirectToOrders()">OK</button>
+        </div>
+    </div>
+
+
+    <script>
+        var options = {
+            "key": "{{ RAZORPAY_KEY_ID }}", // Razorpay public key
+            "amount": "{{ amount }}",       // Amount in paise
+            "currency": "INR",
+            "name": "Ibadi Perfumes",
+            "description": "Complete your purchase",
+            "order_id": "{{ order_id }}",  // Order ID from the server
+            handler: function (response) {
+                // Send the Razorpay response to the server for verification
+                fetch('/verify-payment/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}', // CSRF token for security
+                    },
+                    body: JSON.stringify(response)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message === "Payment verified and order created successfully!") {
+                        showSuccessModal();
+                    } else {
+                        console.error('Payment failed:', data.error);
+                        showFailureModal();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error in payment verification:', error);
+                    showFailureModal();
+                });
+            },
+            "modal": {
+                // Razorpay modal close callback
+                "ondismiss": function () {
+                    console.log("Payment popup closed.");
+                    redirectToOrders();
+                }
+            }
+        };
+    
+        var rzp = new Razorpay(options);
+    
+        // Open Razorpay payment modal on button click
+        document.getElementById('rzp-button1').onclick = function (e) {
+            rzp.open();
+            e.preventDefault();
+        };
+    
+        // Show success modal
+        function showSuccessModal() {
+            document.getElementById('success-modal').style.display = "flex";
+        }
+    
+        // Show failure modal
+        function showFailureModal() {
+            document.getElementById('failure-modal').style.display = "flex";
+        }
+    
+        // Redirect to My Orders
+        function redirectToOrders() {
+            document.getElementById('success-modal').style.display = "none";
+            document.getElementById('failure-modal').style.display = "none";
+            window.location.href = "/myOrder";
+        }
+    </script>
+    
+
+
+
+{% comment %} 
     <script>
         var options = {
             "key": "{{ RAZORPAY_KEY_ID }}",  // Razorpay public key
@@ -149,13 +230,14 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.message === "Payment verified and order created successfully!") {
-                        showModal();
+                        showSuccessModal();
                     } else {
-                        alert("Payment verification failed!");
+                        showFailureModal();
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
+                    showFailureModal();
                 });
             }
         };
@@ -166,16 +248,22 @@
             e.preventDefault();
         };
 
-        // Show modal function
-        function showModal() {
+        // Show success modal function
+        function showSuccessModal() {
             document.getElementById('success-modal').style.display = "flex";
         }
 
-        // Close modal function
-        function closeModal() {
+        // Show failure modal function
+        function showFailureModal() {
+            document.getElementById('failure-modal').style.display = "flex";
+        }
+
+        // Redirect to My Orders
+        function redirectToOrders() {
             document.getElementById('success-modal').style.display = "none";
+            document.getElementById('failure-modal').style.display = "none";
             window.location.href = "/myOrder";
         }
-    </script>
+    </script> {% endcomment %}
 </body>
 </html>

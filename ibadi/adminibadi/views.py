@@ -5,13 +5,20 @@ from .forms import aloginForm, CouponForm
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.contrib.auth import authenticate,login,logout
-from useribadi.models import User, Order,OrderItem
+from useribadi.models import User, Order,OrderItem,Wallet
 from django.db.models import Q
 from adminibadi.models import Category,Product,ProductImage,ProductVariants,Coupon
 from django.views.decorators.cache import cache_control
 from django.contrib.auth.decorators import login_required
 from datetime import datetime, timedelta
 from django.db.models import Sum,Count
+from django.template.loader import render_to_string
+from xhtml2pdf import pisa
+from io import BytesIO
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Font, Border, Side
+from django.utils.timezone import datetime
+
 
 
 
@@ -62,7 +69,7 @@ def adminLogout(request):
 
 
 def customers(request):
-    users = User.objects.filter(is_admin=False)
+    users = User.objects.filter(is_admin=False).order_by('-id')
     return render(request,'adminibadi/customers.html',{'users' : users })
     
 
@@ -372,7 +379,11 @@ def ordersList(request):
             order = Order.objects.get(order_id=order_id)
             if newStatus in dict(order.order_status_choices):
                 order.order_status = newStatus
+                if order.order_status == 'DELIVERED':
+                    order.payment_status = 'PAID'
                 order.save()
+                print(newStatus)
+                print(order.payment_status)
                 return redirect('ordersList')  
         except Order.DoesNotExist:
             return HttpResponse('Order not found',status=404)
@@ -382,6 +393,67 @@ def ordersList(request):
     page_number = request.GET.get('page',1)
     page_obj = paginator.get_page(page_number)
     return render(request,'adminibadi/orders.html',{'orders':page_obj})
+
+
+
+def orderDetails(request,order_id):
+    order = get_object_or_404(Order,order_id=order_id)
+    print(order.order_id)
+    print(order.user.full_name)
+
+    items = OrderItem.objects.filter(order=order)
+    for item in items:
+        item.main_image = item.product.product_images.filter(is_main=True).first()
+        item.total_price = item.quantity * item.price
+    return render(request,'adminibadi/orderDetails.html',{'order':order, 'items':items})
+
+
+
+def acceptReturn(request,order_id):
+    order = get_object_or_404(Order, order_id=order_id)
+    if order.order_status == 'Return Requested':
+        order.order_status = 'Returned'
+        order.payment_status = 'REFUNDED'
+        order.save()
+
+        refundableAmount = order.final_amount - order.delivery_charge
+
+        latestWalletEntry = Wallet.objects.filter(user=order.user).order_by('-created_at').first()
+        currentBalance = latestWalletEntry.current_balance if latestWalletEntry else Decimal(0)
+        updatedBalance = currentBalance + refundableAmount
+
+        Wallet.objects.create(
+            user = order.user,
+            transaction_type = 'CREDITED',
+            order = order,
+            amount = refundableAmount,
+            current_balance = updatedBalance,
+            reason = f'Refund for returned order {order.order_id}'
+        )
+        
+        orderItems = OrderItem.objects.filter(order=order)
+        for item in orderItems:
+            product = item.product
+            product.quantity += item.quantity
+            product.save()
+
+        messages.success(request,'Return request accepted and amount refunded to wallet.')
+    else:
+        messages.error(request, 'Invalid return request status.')
+    return redirect('orderDetails',order_id)
+
+
+
+
+def rejectReturn(request,order_id):
+    order = get_object_or_404(Order,order_id=order_id)
+    if order.order_status == 'Return Requested':
+        order.order_status = 'Return Rejected'
+        order.save()
+        messages.error(request, f'Return request rejected for order {order.order_id}')
+    else:
+        messages.error(request,'Invalid return request status')
+    return redirect('orderDetails',order_id)
 
 
 
@@ -529,15 +601,14 @@ def deleteCoupon(request, coupon_id):
 
 def salesReport(request):
     filterType = request.GET.get('filter_type', 'daily')
-    # startdate = request.GET.get('start_date', None)
-    # endDate = request.GET.get('end_date', None)
+    startDate = request.GET.get('start_date')
+    endDate = request.GET.get('end_date')
+    
+    orders = Order.objects.filter(payment_status='PAID').order_by('-order_id')
 
-    orders = Order.objects.all().order_by('-order_id')
-
-    # if startdate and endDate:
-    #     orders = orders.filter(order_at__range=[startdate, endDate])
-
-    if filterType == 'daily':
+    if filterType == 'custom' and startDate and endDate:
+        orders=orders.filter(order_at__range=[startDate,endDate])
+    elif filterType == 'daily':
         today = datetime.today()
         orders = orders.filter(order_at__year=today.year, order_at__month=today.month, order_at__day=today.day)
     elif filterType == 'weekly':
@@ -547,22 +618,93 @@ def salesReport(request):
         stratOfMonth = datetime.today() - timedelta(days=30)
         orders = orders.filter(order_at__gte=stratOfMonth)
 
-    
     paginator = Paginator(orders, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-
     overallSalesCount = orders.count()
     overallOrderAmount = orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
     overallDiscount = orders.aggregate(Sum('discount_amount'))['discount_amount__sum'] or 0
+
+    if 'download_pdf' in request.GET:
+        return pdfReport(orders)
+    if 'download_excel' in request.GET:
+        return excelReport(orders)
+    
     return render(request, 'adminibadi/salesReport.html',{
         'page_obj' : page_obj,
         'overall_sales_count' : overallSalesCount,
         'overall_order_amount' : overallOrderAmount,
         'overall_discount' : overallDiscount,
-        'filter_type' : filterType
+        'filter_type' : filterType,
+        'start_date' : startDate,
+        'end_date' :endDate,
     })
+
+
+
+def pdfReport(orders):
+    html = render_to_string('adminibadi/salesReportPdf.html',{'orders':orders})
+
+    buffer = BytesIO()
+    pdf = pisa.pisaDocument(BytesIO(html.encode('UTF-8')), buffer)
+
+    if not pdf.err:
+        response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = 'inline; filename="sales_report.pdf"'
+        return response
+    else:
+        return HttpResponse('Error generating PDF', status=500)
+    
+
+
+
+def excelReport(orders):
+    html = render_to_string('adminibadi/salesReportExcel.html',{'orders':orders})
+
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Sales Report"
+
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(html,'html.parser')
+    table = soup.find('table')
+
+    headerRow = table.find('thead').find_all('th')
+    for col_num, header in enumerate(headerRow, start=1):
+        cell = sheet.cell(row=1, column=col_num)
+        cell.value = header.text
+        cell.font = Font(bold=True)
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+
+    bodyRows = table.find('tbody').find_all('tr')
+    for row_num, row in enumerate(bodyRows, start=2):
+        cols = row.find_all('td')
+        for col_num, col in enumerate(cols, start=1):
+            cell = sheet.cell(row=row_num, column=col_num)
+            cell.value = col.text
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+
+    for col in sheet.columns:
+        max_length = 0
+        col_letter = col[0].column_letter
+        for cell in col:
+            try:
+                if cell.value:
+                    max_length = max(max_length,len(str(cell.value)))
+            except:
+                pass
+        adjusted_width = (max_length + 2)
+        sheet.column_dimensions[col_letter].width = adjusted_width
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="sales_report.xlsx"'
+    workbook.save(response)
+    return response
+
+
+
+
 
 
 

@@ -3,180 +3,207 @@
 
 {% block content %}
 <div class="container py-5">
-    <div class="row">
+    <div class="row g-4">
         <!-- Sidebar -->
-        <div class="col-md-3 mb-4 ">
-            <div class="bg-dark text-light rounded shadow p-3">
-                <ul class="nav flex-column">
+        <div class="col-md-3">
+            <div class="bg-dark text-light rounded shadow-lg p-3 sticky-md-top" style="top: 2rem;">
+                <ul class="nav flex-column gap-1">
                     <li class="nav-item">
-                        <a class="nav-link text-warning py-2" href="{% url 'userProfile' %}" id="profile-link">
-                            <i class="fas fa-user me-2"></i>My Profile
+                        <a class="nav-link text-warning d-flex align-items-center py-2 px-3 {% if request.resolver_match.url_name == 'userProfile' %}active bg-warning bg-opacity-10{% endif %}" href="{% url 'userProfile' %}">
+                            <i class="fas fa-user me-3"></i>My Profile
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-warning py-2" href="{% url 'userAddress' %}" id="address-link">
-                            <i class="fas fa-map-marker-alt me-2"></i>Manage Address
+                        <a class="nav-link text-warning d-flex align-items-center py-2 px-3 {% if request.resolver_match.url_name == 'userAddress' %}active bg-warning bg-opacity-10{% endif %}" href="{% url 'userAddress' %}">
+                            <i class="fas fa-map-marker-alt me-3"></i>Manage Address
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-warning py-2" href="{% url 'wishlist' %}" id="wishlist-link">
-                            <i class="fas fa-heart me-2"></i>My Wishlist
+                        <a class="nav-link text-warning d-flex align-items-center py-2 px-3 {% if request.resolver_match.url_name == 'wishlist' %}active bg-warning bg-opacity-10{% endif %}" href="{% url 'wishlist' %}">
+                            <i class="fas fa-heart me-3"></i>My Wishlist
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-warning py-2" href="{% url 'myCart' %}" id="cart-link">
-                            <i class="fas fa-shopping-cart"></i> My Cart
+                        <a class="nav-link text-warning d-flex align-items-center py-2 px-3 {% if request.resolver_match.url_name == 'myCart' %}active bg-warning bg-opacity-10{% endif %}" href="{% url 'myCart' %}">
+                            <i class="fas fa-shopping-cart me-3"></i>My Cart
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-warning py-2 active" href="{% url 'myOrder' %}" id="orders-link">
-                            <i class="fas fa-shopping-bag me-2"></i>My Orders
+                        <a class="nav-link text-warning d-flex align-items-center py-2 px-3 active bg-warning bg-opacity-10" href="{% url 'myOrder' %}">
+                            <i class="fas fa-shopping-bag me-3"></i>My Orders
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-warning py-2" href="{% url 'wallet' %}" id="wallet-link">
-                            <i class="fas fa-wallet me-2"></i>My Wallet
+                        <a class="nav-link text-warning d-flex align-items-center py-2 px-3 {% if request.resolver_match.url_name == 'wallet' %}active bg-warning bg-opacity-10{% endif %}" href="{% url 'wallet' %}">
+                            <i class="fas fa-wallet me-3"></i>My Wallet
                         </a>
                     </li>
                 </ul>
-                <hr class="bg-warning">
-                <a href="{% url 'userLogout' %}" class="nav-link text-danger py-2">
-                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                <hr class="bg-warning opacity-25 my-3">
+                <a href="{% url 'userLogout' %}" class="nav-link text-danger d-flex align-items-center py-2 px-3">
+                    <i class="fas fa-sign-out-alt me-3"></i>Logout
                 </a>
             </div>
         </div>
 
         <!-- Main Content -->
         <div class="col-md-9">
-            <div class="bg-dark text-light rounded shadow p-4">
-                <h4 class="text-warning mb-4">My Orders</h4>
+            <div class="bg-dark text-light rounded shadow-lg p-4">
+                <h4 class="text-warning mb-4 d-flex align-items-center">
+                    <i class="fas fa-shopping-bag me-2"></i>My Orders
+                </h4>
+                
                 {% if orders %}
                     {% for order in orders %}
-                    <div class="bg-dark text-light rounded shadow-sm p-3 mb-4">
+                    <div class="bg-dark text-light rounded shadow p-4 mb-4 border border-secondary border-opacity-25">
                         <!-- Order Header -->
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="text-warning">Order ID: {{ order.order.order_id }}</h5>
-                            <span class="text-muted">Ordered On: {{ order.order.order_at }}</span>
+                        <div class="d-flex flex-wrap justify-content-between align-items-center pb-3 border-bottom border-secondary border-opacity-25">
+                            <div>
+                                <h5 class="text-warning mb-1">Order #{{ order.order.order_id }}</h5>
+                                <span class="text-muted small">Ordered on {{ order.order.order_at|date:"d M Y" }}</span>
+                            </div>
+                            <!-- Status Section -->
+                            <div class="d-flex flex-column align-items-end gap-2 mt-2 mt-sm-0">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-light small">Payment Method:</span>
+                                    <span class="badge rounded-pill" style="background-color: #20c997;">
+                                        {{ order.order.payment_method|default:"Not Specified" }}
+                                    </span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-light small">Payment Status:</span>
+                                    <span class="badge rounded-pill" style="background-color: 
+                                        {% if order.payment_status == 'Paid' %}#28a745
+                                        {% elif order.payment_status == 'Failed' %}#dc3545
+                                        {% else %}#ffc107{% endif %};">
+                                        {{ order.payment_status|default:"Unknown" }}
+                                    </span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-light small">Order Status:</span>
+                                    <span class="badge rounded-pill bg-info">{{ order.order_status }}</span>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Order Status with Cancel/Return Button -->
-                        <div class="d-flex justify-content-between mb-3">
-                            <div>
-                                <h6 class="text-warning">Shipped To:</h6>
-                                <p>
-                                    {{ order.order.shipping_address.name }}<br>
-                                    {{ order.order.shipping_address.address }}, {{ order.order.shipping_address.city }}<br>
-                                    {{ order.order.shipping_address.pincode }}<br>
-                                    Phone: {{ order.order.shipping_address.phone }}
-                                </p>
-                                <span class="badge" style="background-color: #20c997; color: #fff; font-size: 0.85rem;">
-                                    Payment Method: {{ order.order.payment_method|default:"Not Specified" }}
-                                </span>
+                        <!-- Shipping Address -->
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="bg-dark bg-opacity-50 rounded p-3">
+                                    <h6 class="text-warning mb-2">Shipping Address</h6>
+                                    <p class="mb-0 small">
+                                        {{ order.order.shipping_address.name }}<br>
+                                        {{ order.order.shipping_address.address }}<br>
+                                        {{ order.order.shipping_address.city }} - {{ order.order.shipping_address.pincode }}<br>
+                                        <i class="fas fa-phone-alt me-1"></i> {{ order.order.shipping_address.phone }}
+                                    </p>
+                                </div>
                             </div>
-                            <div class="text-end">
-                                <h6 class="text-warning">Order Status:</h6>
-                                <p>
-                                    <span class="badge bg-info text-dark">{{ order.order_status }}</span>
-                                </p>
-                                {% if order.order_status == 'Delivered' %}
-                                    <a href="" 
-                                       class="btn btn-success btn-sm mt-2" 
-                                       title="Return Product">
-                                       Return Product
-                                    </a>
-                                {% elif order.order_status == 'pending' or order.order_status == 'Shipped' %}
-                                <form action="{% url 'cancelOrder' order.order.order_id %}" method="POST" style="display:inline;">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-danger btn-sm mt-2" title="Cancel Order">
-                                        Cancel Order
-                                    </button>
-                                </form>
-                                {% endif %}
+                            <div class="col-md-6 mt-3 mt-md-0">
+                                <div class="d-flex flex-column gap-2">
+                                    {% if order.payment_status == 'Pending' and order.payment_method == 'ONLINE' %}
+                                        <a href="{% url 'retryPayment' order.order.order_id %}" class="btn btn-warning btn-sm">
+                                            <i class="fas fa-credit-card me-2"></i>Pay Now
+                                        </a>
+                                    {% elif order.order_status == 'Delivered' %}
+                                        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#returnModal{{ order.order.order_id }}">
+                                            <i class="fas fa-undo-alt me-2"></i>Return Product
+                                        </button>
+                                    {% elif order.order_status == 'Pending' or order.order_status == 'Shipped' %}
+                                        <form action="{% url 'cancelOrder' order.order.order_id %}" method="POST">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger btn-sm w-100">
+                                                <i class="fas fa-times me-2"></i>Cancel Order
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                    {% if order.payment_status == 'Paid' %}
+                                        <a href="{% url 'invoicePdf' order.order.order_id %}" class="btn btn-info btn-sm">
+                                            <i class="fas fa-download me-2"></i>Download Invoice
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modal for Product Return -->
+                        <div class="modal fade" id="returnModal{{ order.order.order_id }}" tabindex="-1" aria-labelledby="returnModalLabel{{ order.order.order_id }}" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content bg-dark text-light">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title text-warning" id="returnModalLabel{{ order.order.order_id }}">Request Product Return</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form action="{% url 'returnProduct' order.order.order_id %}" method="POST">
+                                            {% csrf_token %}
+                                            <div class="mb-3">
+                                                <label for="returnReason{{ order.order.order_id }}" class="form-label text-warning">Return Reason</label>
+                                                <select class="form-select" id="returnReason{{ order.order.order_id }}" name="return_reason" required>
+                                                    <option value="Damaged">Damaged Product</option>
+                                                    <option value="Incorrect">Incorrect Product</option>
+                                                    <option value="No longer Needed">No Longer Needed</option>
+                                                    <option value="Other">Other</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="additionalComments{{ order.order.order_id }}" class="form-label text-warning">Additional Comments (Optional)</label>
+                                                <textarea class="form-control" id="additionalComments{{ order.order.order_id }}" name="comments" rows="3"></textarea>
+                                            </div>
+                                            <button type="submit" class="btn btn-danger w-100">Submit Return Request</button>
+                                        </form>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Order Items -->
-                        {% for item in order.items %}
-                        <div class="d-flex flex-column flex-md-row align-items-center mb-4 text-light rounded p-3 border border-secondary product-row">
-                            <div class="me-md-4 mb-3 mb-md-0 text-center">
-                                {% if item.main_image %}
-                                <img src="{{ item.main_image.images.url }}" 
-                                     alt="{{ item.product.product_name }}" 
-                                     class="img-thumbnail" 
-                                     style="width: 100px; height: 100px;">
-                                {% else %}
-                                <img src="{% static 'path/to/default-image.jpg' %}" 
-                                     alt="Default Image" 
-                                     class="img-thumbnail" 
-                                     style="width: 100px; height: 100px;">
-                                {% endif %}
+                        <div class="mt-4">
+                            {% for item in order.items %}
+                            <div class="d-flex gap-3 bg-dark bg-opacity-50 rounded p-3 mb-3">
+                                <div class="flex-shrink-0">
+                                    {% if item.main_image %}
+                                    <img src="{{ item.main_image.images.url }}" 
+                                         alt="{{ item.product.product_name }}" 
+                                         class="rounded object-fit-cover"
+                                         style="width: 80px; height: 80px;">
+                                    {% else %}
+                                    <img src="{% static 'path/to/default-image.jpg' %}" 
+                                         alt="Default Image"
+                                         class="rounded object-fit-cover"
+                                         style="width: 80px; height: 80px;">
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="text-warning mb-2">{{ item.product.product_name }}</h6>
+                                    <div class="d-flex flex-wrap gap-3 small">
+                                        <span>Size: {{ item.product.variant.variant_name|default:"Not Specified" }}</span>
+                                        <span>Qty: {{ item.quantity }}</span>
+                                        <span>₹{{ item.price }}</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="flex-grow-1">
-                                <h6 class="text-warning mb-1">{{ item.product.product_name }}</h6>
-                                <p class="mb-1">Size: {{ item.product.variant.variant_name|default:"Not Specified" }}</p>
-                                <p class="mb-1">Quantity: {{ item.quantity }}</p>
-                                <p class="mb-1">Price: ₹{{ item.price }}</p>
-                            </div>
-
-                            {% comment %} <div class="ms-md-3 mt-2 mt-md-0">
-                                {% if item.is_cancelled %}
-                                <span class="badge bg-danger">Cancelled Product</span>
-                                {% elif order.order_status != 'Cancelled' and order.order_status != 'Delivered' %}
-                                <a href="{% url 'removeProductFromOrder' item.order_item_id %}" 
-                                   class="btn btn-outline-danger btn-sm">
-                                    Remove Product
-                                </a>
-                                {% endif %}
-                            </div>
-                             {% endcomment %}
+                            {% endfor %}
                         </div>
-                        {% endfor %}
 
                         <!-- Order Summary -->
-                        <hr class="bg-warning">
-                        <div class="d-flex justify-content-between mt-3">
-                            <span><strong>Total Amount:</strong></span>
-                            {% if order.order_status == 'CANCELLED' %}
-                                <span>₹{{ order.order.original_amount }}</span>
-                            {% else %}
-                                <span>₹{{ order.order.final_amount }}</span>
-                            {% endif %}
+                        <div class="mt-3 pt-3 border-top border-secondary border-opacity-25">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-warning">Total Amount:</span>
+                                <span class="h5 mb-0">₹{{ order.order.final_amount }}</span>
+                            </div>
                         </div>
-
                     </div>
                     {% endfor %}
                 {% else %}
-                    <div class="text-center text-warning">You have not placed any orders yet.</div>
+                    <div class="text-center py-5">
+                        <i class="fas fa-shopping-bag text-warning mb-3" style="font-size: 3rem;"></i>
+                        <h5 class="text-warning">No Orders Yet</h5>
+                        <p class="text-muted">You haven't placed any orders yet.</p>
+                    </div>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
-
-<style>
-    .product-row {
-        transition: all 0.3s ease;
-    }
-    .product-row:hover {
-        background-color: rgba(255, 193, 7, 0.1);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        transform: scale(1.02);
-    }
-    .img-thumbnail {
-        object-fit: cover;
-        border: 2px solid #ffc107;
-    }
-    .btn-outline-danger {
-        color: #dc3545;
-        border-color: #dc3545;
-    }
-    .btn-outline-danger:hover {
-        color: #fff;
-        background-color: #dc3545;
-        border-color: #dc3545;
-    }
-    .badge.bg-danger {
-        background-color: #dc3545 !important;
-    }
-</style>
 {% endblock %}

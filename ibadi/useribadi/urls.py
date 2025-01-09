@@ -31,11 +31,13 @@ urlpatterns = [
     path('myOrder',views.myOrder,name='myOrder'),
     # path('removeProductFromOrder/<int:order_item_id>',views.removeProductFromOrder,name='removeProductFromOrder'),
     path('cancelOrder/<int:order_id>',views.cancelOrder,name='cancelOrder'),
+    path('returnProduct/<int:order_id>',views.returnProduct,name='returnProduct'),
     path('addToWishlist/<int:product_id>',views.addToWishlist,name='addToWishlist'),
     path('wishlist',views.wishlist,name='wishlist'),
     path('removeFromWishlist/<int:product_id>',views.removeFromWishlist,name='removeFromWishlist'),
     path('wallet',views.wallet,name='wallet'),
     path('applyCoupon', views.applyCoupon,name='applyCoupon'),
-    # path('create-order/',views.createOrder,name='create-order'),
-    path('verify-payment/',views.verifyPayment,name='verify-payment')
+    path('verify-payment/',views.verifyPayment,name='verify-payment'),
+    path('retryPayment/<int:order_id>',views.retryPayment,name='retryPayment'),
+    path('invoicePdf/<int:order_id>',views.invoicePdf,name='invoicePdf'),
 ]

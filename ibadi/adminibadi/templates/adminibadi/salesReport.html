@@ -12,10 +12,16 @@
     <!-- Filter Section -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0 font-weight-bold">Sales Report</h2>
+        
         <div class="d-flex">
-            <button class="btn btn-primary me-2">Download PDF</button>
-            <button class="btn btn-secondary">Download Excel</button>
+            <a href="?filter_type={{ filter_type }}&start_date={{ start_date }}&end_date={{ end_date }}&download_pdf=true" class="btn btn-primary me-2">
+                Download PDF
+            </a>
+            <a href="?filter_type={{ filter_type }}&start_date={{ start_date }}&end_date={{ end_date }}&download_excel=true" class="btn btn-secondary">
+                Download Excel
+            </a>
         </div>
+        
     </div>
 
     <div class="card mb-4">
@@ -146,4 +152,27 @@
         </nav>
     </div>
 </div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const filterTypeSelect = document.getElementById('filter-type');
+        const startDateInput = document.getElementById('start-date');
+        const endDateInput = document.getElementById('end-date');
+
+        function toggleDateInputs() {
+            if (filterTypeSelect.value === 'custom') {
+                startDateInput.disabled = false;
+                endDateInput.disabled = false;
+            } else {
+                startDateInput.disabled = true;
+                endDateInput.disabled = true;
+            }
+        }
+
+        filterTypeSelect.addEventListener('change', toggleDateInputs);
+        toggleDateInputs(); // Initialize on page load
+    });
+</script>
+
 {% endblock %}

@@ -115,7 +115,8 @@ class Order(models.Model):
         ('PENDING', 'Pending'),
         ('SHIPPED', 'Shipped'),
         ('DELIVERED', 'Delivered'),
-        ('CANCELLED', 'Cancelled')
+        ('CANCELLED', 'Cancelled'),
+
 
     ]
 
@@ -128,7 +129,7 @@ class Order(models.Model):
     payment_status_choices = [
         ('PENDING', 'Pending'),
         ('PAID', 'Paid'),
-        ('FAILED', 'Failed'),
+        ('REFUNDED', 'Refunded'),
     ]
 
     order_id = models.AutoField(primary_key=True)
@@ -138,11 +139,13 @@ class Order(models.Model):
     delivery_charge = models.DecimalField(max_digits=10, decimal_places=2)
     final_amount = models.DecimalField(max_digits=10, decimal_places=2)
     payment_method = models.CharField(max_length=20, choices=payment_method_choices)
-    payment_status = models.CharField(max_length=20, choices=payment_status_choices, default='pending')
+    payment_status = models.CharField(max_length=20, choices=payment_status_choices, default='PENDING')
     order_at = models.DateField(auto_now_add=True)
-    order_status = models.CharField(max_length=50,choices=order_status_choices,default='pending')
+    order_status = models.CharField(max_length=50,choices=order_status_choices,default='PENDING')
     shipping_address = models.ForeignKey(ShippingAddress, on_delete=models.CASCADE)
     original_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    razorpay_order_id = models.CharField(max_length=50, null=True, blank=True)
+    return_reason = models.TextField(blank=True,null=True)
 
     def save(self,*args, **kwargs):
         if not self.original_amount:
