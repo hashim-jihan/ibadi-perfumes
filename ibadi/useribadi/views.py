@@ -874,10 +874,11 @@ def checkoutPage(request):
                 discount_amount=discount_amount, 
                 delivery_charge=deliveryCharge, 
                 final_amount=final_amount, 
-                payment_method=payment_method,
+                payment_method='ONLINE',
                 shipping_address=shipping_address,
                 razorpay_order_id=razorpay_order['id'],
                 )
+            print(type(order.payment_method))
             
             for cartItem in cartItems:
                 product_discount = product_discounts.get(str(cartItem.id), 0)
@@ -968,7 +969,7 @@ def verifyPayment(request):
             if order:
                 order.payment_status = 'PENDING'
                 order.save()
-
+    
             return JsonResponse({
                 "message": "Payment verification failed!",
                 "error": str(e),
@@ -1022,9 +1023,9 @@ def myOrder(request):
             'order':order,
             'items':items,
             'order_status':order.get_order_status_display(),
-            'payment_status':order.get_payment_status_display()
+            'payment_status':order.get_payment_status_display(),
+            'payment_method':order.get_payment_method_display()
         })
-
     return render(request,'useribadi/myOrder.html',{'orders':orderWithItems})
 
 
@@ -1070,7 +1071,7 @@ def cancelOrder(request,order_id):
         return redirect('userLogin')
     if request.method == 'POST':
         order = get_object_or_404(Order,order_id=order_id, user=request.user)
-        if order.order_status in ['PENDING','SHIPPED']:
+        if order.order_status in ['pending','SHIPPED']:
             orderItems = OrderItem.objects.filter(order=order)
             for orderItem in orderItems:
                 if not orderItem.is_cancelled:
@@ -1193,7 +1194,23 @@ def wallet(request):
 
 def invoicePdf(request,order_id):
     order = Order.objects.get(order_id=order_id)
-    html = render_to_string('useribadi/invoicePdf.html',{'order':order})
+    orderItems = OrderItem.objects.filter(order_id=order_id)
+    
+    for item in orderItems:
+        item.total_price = item.price * item.quantity
+
+    subTotal = sum(item.total_price for item in orderItems)
+    discount = order.discount_amount if order.discount_amount else 0
+    deliveryCharge = order.delivery_charge
+    netAmount = order.final_amount
+    html = render_to_string('useribadi/invoicePdf.html',{
+        'order':order, 
+        'order_items':orderItems,
+        'sub_total':subTotal,
+        'discount':discount,
+        'delivery_charge':deliveryCharge,
+        'net_amount':netAmount
+        })
 
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="Invoice_{order.order_id}.pdf"'

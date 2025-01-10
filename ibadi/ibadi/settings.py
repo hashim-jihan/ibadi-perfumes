@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-
+from environ import Env
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -20,10 +20,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
+env = Env()
+Env.read_env(env_file='.env')  
+
 SECRET_KEY = 'django-insecure-nbua!k9&+x^dpo-ez0#*p#qxa_m_4kv1hk24sb43y%46w(1mqs'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool('DEBUG',default=False)
 
 ALLOWED_HOSTS = []
 
@@ -85,11 +88,11 @@ WSGI_APPLICATION = 'ibadi.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'ibadi',
-        'USER': 'postgres',
-        'PASSWORD': 'root',
-        'HOST': 'localhost',  # Or the IP address of your database server
-        'PORT': '5432',       # Default PostgreSQL port
+        'NAME': env('NAME'),
+        'USER': env('USER'),
+        'PASSWORD': env('PASSWORD'),
+        'HOST': env('HOST'),  # Or the IP address of your database server
+        'PORT': env.int('PORT'),       # Default PostgreSQL port
     }
 }
 
@@ -130,7 +133,7 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',  # Allauth
 ]
 
-SITE_ID = 1
+SITE_ID = env.int('SITE_ID')
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
@@ -183,14 +186,14 @@ AUTH_USER_MODEL = 'useribadi.User'
 
 # settings.py
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'  # Or use the email provider of your choice
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'ibadiperfumes111@gmail.com'  # Your email address
-EMAIL_HOST_PASSWORD = 'gosxbvicdkntxmso'  # Your email password (consider using environment variables)
+EMAIL_HOST = env('EMAIL_HOST')  # Or use the email provider of your choice
+EMAIL_PORT = env.int('EMAIL_PORT')
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS')
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')  # Your email address
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')  # Your email password (consider using environment variables)
 
 
-RAZORPAY_KEY_ID = 'rzp_test_JKtXFtBFc0KVto'
-RAZORPAY_KEY_SECRET = 'YDl0J218MumHRVJbDcC1KKoE'
+RAZORPAY_KEY_ID = env('RAZORPAY_KEY_ID')
+RAZORPAY_KEY_SECRET = env('RAZORPAY_KEY_SECRET')
 
 SECURE_CROSS_ORIGIN_OPENER_POLICY="same-orgin-allow-popups"

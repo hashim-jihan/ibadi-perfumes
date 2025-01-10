@@ -112,7 +112,7 @@ class ShippingAddress(models.Model):
 class Order(models.Model):
 
     order_status_choices = [
-        ('PENDING', 'Pending'),
+        ('PENDING', 'pending'),
         ('SHIPPED', 'Shipped'),
         ('DELIVERED', 'Delivered'),
         ('CANCELLED', 'Cancelled'),
@@ -141,7 +141,7 @@ class Order(models.Model):
     payment_method = models.CharField(max_length=20, choices=payment_method_choices)
     payment_status = models.CharField(max_length=20, choices=payment_status_choices, default='PENDING')
     order_at = models.DateField(auto_now_add=True)
-    order_status = models.CharField(max_length=50,choices=order_status_choices,default='PENDING')
+    order_status = models.CharField(max_length=50,choices=order_status_choices,default='pending')
     shipping_address = models.ForeignKey(ShippingAddress, on_delete=models.CASCADE)
     original_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     razorpay_order_id = models.CharField(max_length=50, null=True, blank=True)

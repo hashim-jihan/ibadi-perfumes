@@ -9,28 +9,48 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
+            background-color: #f9f9f9;
         }
         .container {
             width: 100%;
             max-width: 800px;
             margin: 0 auto;
+            background: #fff;
             border: 1px solid #ddd;
+            border-radius: 8px;
             padding: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
-        .header {
+        .header, .footer {
             text-align: center;
         }
         .header h1 {
             margin: 0;
-            font-size: 36px;
+            font-size: 28px;
+            color: #333;
         }
         .header p {
             margin: 5px 0;
             font-size: 14px;
+            color: #666;
+        }
+        .customer-info, .total-section {
+            margin-top: 20px;
+        }
+        .customer-info h3, .total-section h3 {
+            margin-bottom: 10px;
+            font-size: 18px;
+            color: #444;
+        }
+        .customer-info p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #555;
         }
         .invoice-details {
             margin-top: 20px;
             width: 100%;
+            border-collapse: collapse;
         }
         .invoice-details th, .invoice-details td {
             text-align: left;
@@ -39,17 +59,23 @@
         }
         .invoice-details th {
             background-color: #f4f4f4;
+            font-size: 14px;
+            color: #333;
+        }
+        .invoice-details td {
+            font-size: 13px;
+            color: #555;
         }
         .total {
             margin-top: 20px;
             text-align: right;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
         }
-        .footer {
-            text-align: center;
-            margin-top: 40px;
+        .footer p {
+            margin: 5px 0;
             font-size: 12px;
+            color: #666;
         }
     </style>
 </head>
@@ -59,16 +85,22 @@
         <!-- Header Section -->
         <div class="header">
             <h1>Invoice</h1>
-            <p>Invoice #: {{ order.order_id }}</p>
-            <p>Date: {{ order.order_at|date:"Y-m-d" }}</p>
+            <p><strong>Invoice Number:</strong> {{ order.order_id }}</p>
+            <p><strong>Date:</strong> {{ order.order_at|date:"Y-m-d" }}</p>
         </div>
 
         <!-- Customer Information Section -->
-        <div>
+        <div class="customer-info">
             <h3>Customer Information</h3>
             <p><strong>Name:</strong> {{ order.user.full_name }}</p>
             <p><strong>Email:</strong> {{ order.user.email }}</p>
-            <p><strong>Address:</strong> {{ order.shipping_address.name }} <br>{{ order.shipping_address.address }} <br> {{ order.shipping_address.city }} <br> {{ order.shipping_address.landmark }} <br> {{ order.shipping_address.pincode }} <br> {{ order.shipping_address.phone }} </p>
+            <p><strong>Address:</strong><br>
+                {{ order.shipping_address.name }}<br>
+                {{ order.shipping_address.address }}, {{ order.shipping_address.city }}<br>
+                {{ order.shipping_address.landmark }}<br>
+                PIN: {{ order.shipping_address.pincode }}<br>
+                Phone: {{ order.shipping_address.phone }}
+            </p>
         </div>
 
         <!-- Order Details Section -->
@@ -76,34 +108,38 @@
             <thead>
                 <tr>
                     <th>Item</th>
-                    <th>Price</th>
+                    <th>Price (₹)</th>
                     <th>Quantity</th>
-                    <th>Total</th>
+                    <th>Total (₹)</th>
                 </tr>
             </thead>
             <tbody>
-                {% for item in order.items.all %}
+                {% for item in order_items %}
                     <tr>
-                        <td>{{ item.product.name }}</td>
-                        <td>${{ item.price }}</td>
+                        <td>{{ item.product.product_name }}</td>
+                        <td>{{ item.price|floatformat:2 }}</td>
                         <td>{{ item.quantity }}</td>
-                        <td>${{ item.total_price }}</td>
+                        <td>{{ item.total_price|floatformat:2 }}</td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
 
         <!-- Total Section -->
-        <div class="total">
-            <p><strong>Subtotal:</strong> ${{ order.subtotal }}</p>
-            <p><strong>Tax ({{ order.tax_rate }}%):</strong> ${{ order.tax_amount }}</p>
-            <p><strong>Total Amount:</strong> ${{ order.total_price }}</p>
+        <div class="total-section">
+            <h3>Payment Summary</h3>
+            <div class="total">
+                <p><strong>Subtotal:</strong> ₹{{ sub_total|floatformat:2 }}</p>
+                <p><strong>Discount:</strong> ₹{{ discount|floatformat:2 }}</p>
+                <p><strong>Delivery Charge:</strong> ₹{{ delivery_charge|floatformat:2 }}</p>
+                <p><strong>Total Amount:</strong> ₹{{ net_amount|floatformat:2 }}</p>
+            </div>
         </div>
 
         <!-- Footer Section -->
         <div class="footer">
-            <p>Thank you for your business!</p>
-            <p>For support, contact us at: support@yourcompany.com</p>
+            <p>Thank you for shopping with us!</p>
+            <p>If you have any questions, contact us at: <a href="mailto:ibadiperfumes111@gmail.com">ibadiperfumes111@gmail.com</a></p>
         </div>
     </div>
 
