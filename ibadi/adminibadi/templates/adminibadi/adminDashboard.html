@@ -1,0 +1,141 @@
+{% extends 'adminibadi/base.html' %}
+{% load static %}
+
+{% block title %}Ibadi - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Dashboard</h2>
+
+    <!-- Filter Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <form method="get" action="{% url 'adminDashboard' %}">
+            <div class="row">
+                <div class="col-md-3">
+                    <select id="filter-type" name="filter_type" class="form-select">
+                        <option value="daily" {% if filter_type == 'daily' %}selected{% endif %}>Daily</option>
+                        <option value="weekly" {% if filter_type == 'weekly' %}selected{% endif %}>Weekly</option>
+                        <option value="monthly" {% if filter_type == 'monthly' %}selected{% endif %}>Monthly</option>
+                        <option value="yearly" {% if filter_type == 'yearly' %}selected{% endif %}>Yearly</option>
+                        <option value="custom" {% if filter_type == 'custom' %}selected{% endif %}>Custom Range</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input type="date" id="start-date" name="start_date" class="form-control" 
+                           value="{{ start_date }}" {% if filter_type != 'custom' %}disabled{% endif %}>
+                </div>
+                <div class="col-md-3">
+                    <input type="date" id="end-date" name="end_date" class="form-control" 
+                           value="{{ end_date }}" {% if filter_type != 'custom' %}disabled{% endif %}>
+                </div>
+                <div class="col-md-3 text-end">
+                    <button class="btn btn-success">Apply</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bar Graph Section -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <canvas id="salesBarGraph" width="100%" height="40"></canvas>
+        </div>
+    </div>
+
+    <!-- Tables Section -->
+    <div class="row">
+        <div class="col-md-6">
+            <h5>Top Selling Categories</h5>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Sales</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for category in top_categories %}
+                    <tr>
+                        <td>{{ category.category_name }}</td>
+                        <td>{{ category.sales }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2">No data available</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="col-md-6">
+            <h5>Top Selling Products</h5>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Sales</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in top_products %}
+                    <tr>
+                        <td>{{ product.product_name }}</td>
+                        <td>{{ product.sales }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2">No data available</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Handle enabling/disabling date inputs
+    document.getElementById('filter-type').addEventListener('change', function() {
+        const filterType = this.value;
+        const startDateInput = document.getElementById('start-date');
+        const endDateInput = document.getElementById('end-date');
+
+        if (filterType === 'custom') {
+            startDateInput.disabled = false;
+            endDateInput.disabled = false;
+        } else {
+            startDateInput.disabled = true;
+            endDateInput.disabled = true;
+            startDateInput.value = '';
+            endDateInput.value = '';
+        }
+    });
+
+    // Bar graph data
+    const salesData = {
+        labels: ['Total Orders', 'Delivered', 'Cancelled', 'Returned', 'Discount'],
+        datasets: [{
+            label: 'Sales Data',
+            data: [{{ total_orders }}, {{ delivered }}, {{ cancelled }}, {{ returned }}, {{ discount }}],
+            backgroundColor: ['#007bff', '#28a745', '#dc3545', '#ffc107', '#17a2b8'],
+        }]
+    };
+
+    const config = {
+        type: 'bar',
+        data: salesData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    };
+
+    const salesBarGraph = new Chart(
+        document.getElementById('salesBarGraph'),
+        config
+    );
+</script>
+{% endblock %}

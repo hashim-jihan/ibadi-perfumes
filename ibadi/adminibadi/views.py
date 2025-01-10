@@ -29,7 +29,7 @@ from django.utils.timezone import datetime
 def adminLogin(request):
     if request.user.is_authenticated:
          if hasattr(request.user, 'is_admin') and request.user.is_admin:
-            return redirect('adminHome') 
+            return redirect('adminDashboard') 
 
     if request.method == 'POST':
         form = aloginForm(request.POST)
@@ -42,24 +42,67 @@ def adminLogin(request):
                 if user.is_admin:
                     login(request,user)
                     messages.success(request,'Admin LoggedIn')
-                    return redirect('adminHome')
+                    return redirect('adminDashboard')
                 else:
                     messages.error(request, 'Invalid email or Password')
             else:
                 messages.error(request,'Invalid email or Password')
-            
     else:
         form = aloginForm()
-
     return render(request,'adminibadi/alogin.html', {'form' : form})
+
 
 
 @cache_control(no_store=True, must_revalidate=True, no_cache=True)
 @login_required
-def adminHome(request):
+def adminDashboard(request):
     if not request.user.is_authenticated:
             return redirect('adminLogin')
-    return render(request,'adminibadi/adminHome.html')
+    
+    filter_type = request.GET.get('filter_type','daily')
+    startDate = request.GET.get('start_date')
+    endDate = request.GET.get('end_date')
+
+    orders = Order.objects.all()
+
+    if filter_type == 'custom' and startDate and endDate:
+        orders = orders.filter(order_at__range=[startDate,endDate])
+    elif filter_type == 'daily':
+        today = datetime.today().date()
+        orders = orders.filter(order_at=today)
+    elif filter_type == 'weekly':
+        startOfWeek = (datetime.today() - timedelta(days=7)).date()
+        orders = orders.filter(order_at__gte=startOfWeek)
+    elif filter_type == 'monthly':
+        startOfMonth = datetime.today().replace(day=1).date()
+        orders = orders.filter(order_at__gte=startOfMonth)
+    elif filter_type == 'yearly':
+        startOfYear = datetime.today().replace(month=1,day=1).date()
+        orders = orders.filter(order_at__gte=startOfYear)
+
+    
+    totalOrders = orders.count()
+    delivered = orders.filter(order_status='DELIVERED').count()
+    cancelled = orders.filter(order_status='CANCELLED').count()
+    returned = orders.filter(order_status='Returned').count()
+    discount = orders.aggregate(Sum('discount_amount'))['discount_amount__sum'] or 0
+
+    topCategories = Category.objects.filter(is_active=True,is_deleted=False,products__orderitem__order__payment_status='PAID').annotate(sales=Count('products__orderitem')).order_by('-sales')
+    topProducts = Product.objects.filter(orderitem__order__payment_status='PAID').annotate(sales=Count('orderitem')).order_by('-sales')[:5]
+
+    return render(request,'adminibadi/adminDashboard.html',{
+        'filter_type':filter_type,
+        'start_date':startDate,
+        'end_date':endDate,
+        'total_orders':totalOrders,
+        'delivered': delivered,
+        'cancelled': cancelled,
+        'returned':returned,
+        'discount': discount,
+        'top_categories': topCategories,
+        'top_products': topProducts
+    })
+
 
 
 def adminLogout(request):
@@ -640,6 +683,7 @@ def salesReport(request):
         'start_date' : startDate,
         'end_date' :endDate,
     })
+
 
 
 
