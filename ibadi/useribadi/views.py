@@ -299,7 +299,6 @@ def userHome(request):
 
 
 
-
 @cache_control(no_store=True, must_revalidate=True, no_cache=True)
 def userLogout(request):
     logout(request)
