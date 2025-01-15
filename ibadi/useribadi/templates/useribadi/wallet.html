@@ -66,7 +66,18 @@
                         <div class="bg-dark text-light rounded shadow-sm p-3 mb-4">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h6 class="text-warning">{{ transaction.created_at }}</h6>
-                                <span class="badge bg-success">{{ transaction.transaction_type }}</span>
+                                <!-- Conditional Badge Coloring -->
+                                <span class="badge 
+                                    {% if transaction.transaction_type == 'Credited' %}
+                                        bg-success 
+                                    {% elif transaction.transaction_type == 'Debited' %}
+                                        bg-danger
+                                    {% else %}
+                                        bg-secondary
+                                    {% endif %}
+                                ">
+                                    {{ transaction.transaction_type }}
+                                </span>
                             </div>
                             <div class="d-flex justify-content-between">
                                 <span><strong>Transaction ID:</strong> {{ transaction.transaction_id }}</span>

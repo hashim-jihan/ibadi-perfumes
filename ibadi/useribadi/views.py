@@ -807,9 +807,9 @@ def checkoutPage(request):
             messages.error(request,'Cash on Delivery is not available for orders above ₹1000')
             return redirect('checkoutPage')
 
-        if payment_method in ['WALLET']:
-            messages.error(request, f'{payment_method} yet to be active! Please selcet cash on delivery ')
-            return redirect('checkoutPage')
+        # if payment_method in ['WALLET']:
+        #     messages.error(request, f'{payment_method} yet to be active! Please selcet cash on delivery ')
+        #     return redirect('checkoutPage')
 
         if not selected_address:
             messages.error(request,'Please select a delivery address')
@@ -912,6 +912,74 @@ def checkoutPage(request):
                 'amount' : order_amount,
                 'currency' : 'INR',
             })
+        
+
+        if payment_method == 'WALLET':
+            print('rob')
+            try:
+                wallet = Wallet.objects.filter(user=request.user).latest('created_at')
+            except Wallet.DoesNotExist:
+                messages.error(request,'Wallet not found')
+                return redirect('checkoutPage')
+            if wallet.current_balance < final_amount:
+                messages.error(request, 'Insufficient balance in wallet! Please try another payment method')
+                return redirect('checkoutPage')
+            
+            try:
+                walletTransaction = Wallet(
+                    user=request.user,
+                    transaction_type = 'DEBITED',
+                    order = None,
+                    amount = final_amount,
+                    current_balance = wallet.current_balance - final_amount,
+                    reason = 'Order payment',
+                )
+
+                walletTransaction._skip_balance_update = True
+                walletTransaction.save()
+                print(walletTransaction.current_balance)
+                shipping_address.save()
+
+                order = Order.objects.create(
+                    user = request.user,
+                    total_amount = cartSubTotal,
+                    discount_amount = discount_amount,
+                    delivery_charge = deliveryCharge,
+                    final_amount = final_amount,
+                    payment_method = 'WALLET',
+                    payment_status = 'PAID',
+                    shipping_address = shipping_address,
+                )
+                
+
+                for cartItem in cartItems:
+                    product_discount = product_discounts.get(str(cartItem.id), 0)
+                    discounted_price = (cartItem.product.selling_price * cartItem.quantity) - Decimal(product_discount)
+
+                    OrderItem.objects.create(
+                        order=order,
+                        product=cartItem.product,
+                        price=cartItem.product.selling_price,
+                        final_amount=cartItem.product.selling_price * cartItem.quantity,
+                        quantity=cartItem.quantity,
+                        discounted_amount=discounted_price,
+                    )
+
+                    product = cartItem.product
+                    if product.quantity >= cartItem.quantity:
+                        product.quantity -= cartItem.quantity
+                        product.save()
+                
+                cartItems.delete()
+                if 'applied_coupon' in request.session:
+                    del request.session['applied_coupon']
+                
+
+                messages.success(request, 'Order placed successfully using Wallet payment')
+                return redirect('myOrder')
+            except Exception as e:
+                messages.error(request, f'Error processing wallet payment: {str(e)}')
+                return redirect('checkoutPage')
 
     return render(request,'useribadi/checkout.html', {
         'cartItems':cartItemWithSubTotal,
@@ -1088,7 +1156,7 @@ def cancelOrder(request,order_id):
             order.final_amount = order.original_amount
             order.save()
             
-            if order.payment_method == 'ONLINE':
+            if order.payment_method == 'ONLINE' or order.payment_method == 'WALLET':
                 try:
                     latestWalletEntry =Wallet.objects.filter(user=request.user).order_by('-created_at').first()
                     currentBalance = latestWalletEntry.current_balance if latestWalletEntry else Decimal(0)

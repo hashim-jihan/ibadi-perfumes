@@ -198,7 +198,7 @@ class Wallet(models.Model):
     wallet_id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     transaction_type = models.CharField(max_length=10, default=TRANSACTION_TYPE_CHOICES)
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, null=True, blank=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     current_balance = models.DecimalField(max_digits=10, decimal_places=2)
     reason = models.TextField()
@@ -207,10 +207,11 @@ class Wallet(models.Model):
 
 
     def save(self, *args, **kwargs):
-        if self.transaction_type == 'Credited':
-            self.current_balance += self.amount
-        elif self.transaction_type == 'Debited':
-            self.current_balance -= self.amount
+        if not hasattr(self, '_skip_balance_update'):
+            if self.transaction_type == 'Credited':
+                self.current_balance += self.amount
+            elif self.transaction_type == 'Debited':
+                self.current_balance -= self.amount
 
 
         if self.current_balance < Decimal(0.00):

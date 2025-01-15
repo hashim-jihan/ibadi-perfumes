@@ -1,4 +1,5 @@
 {% load static %}
+{% load socialaccount %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -69,7 +70,7 @@
                 </form>
 
                 <p class="or-divider">OR</p>
-                <a href="#" class="google-signup-btn">
+                <a href="{% provider_login_url 'google' %}" class="google-signup-btn">
                     <img src="{% static 'useribadi/images/google.webp' %}" alt="Google Icon"> Sign Up with Google
                 </a>
                 <p class="login-link">Already have an account? <a href="{% url 'userLogin' %}">Login here</a></p>
