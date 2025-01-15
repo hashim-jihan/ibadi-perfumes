@@ -142,13 +142,15 @@ SOCIALACCOUNT_PROVIDERS = {
             'email',
         ],
         'AUTH_PARAMS': {
-            'access_type': 'online',
+            'access_type': 'offline',
+            'prompt': 'select_account',
         },
     }
 }
 
 
-LOGIN_REDIRCT_URL = 'userHome'
+LOGIN_REDIRECT_URL = 'userHome'
+ACCOUNT_SIGNUP_REDIRECT_URL = 'userHome'  # Redirect after signup
 ACCOUNT_LOGOUT_REDIRECT_URL = 'userLogin'
 
 

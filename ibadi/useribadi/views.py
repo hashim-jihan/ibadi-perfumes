@@ -267,6 +267,8 @@ def resetPassword(request,email):
     return render(request, 'useribadi/resetPassword.html')
 
 
+
+
 @cache_control(no_store=True, must_revalidate=True, no_cache=True)
 def userHome(request):
     if not request.user.is_authenticated:
@@ -365,6 +367,7 @@ def shop(request):
         'max_price' :max_price,
         'search_query':searchQuery
         })
+
 
 
 
