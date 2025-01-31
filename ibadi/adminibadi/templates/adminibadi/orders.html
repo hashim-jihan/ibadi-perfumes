@@ -51,7 +51,7 @@
                     
                             <div class="input-group input-group-sm">
                                 <select name="order_status" class="form-select form-select-sm"
-                                    {% if order.order_status == 'DELIVERED' or order.order_status == 'CANCELLED' or order.order_status == 'Cancelled' %}disabled{% endif %}>
+                                    {% if order.order_status == 'DELIVERED' or order.order_status == 'CANCELLED' or order.order_status == 'Cancelled' or order.order_status == 'Return Requested' %}disabled{% endif %}>
                                     {% for status, display in order.order_status_choices %}
                                         {% if status != 'Cancelled' and status != 'CANCELLED' %}
                                         <option value="{{ status }}" 
@@ -64,7 +64,7 @@
                                 </select>
                     
                                 <button type="submit" class="btn btn-sm btn-success" 
-                                    {% if order.order_status == 'DELIVERED' or order.order_status == 'CANCELLED' or order.order_status == 'Cancelled' or order.order_status == 'Returned'  %}disabled{% endif %}>
+                                    {% if order.order_status == 'DELIVERED' or order.order_status == 'CANCELLED' or order.order_status == 'Cancelled' or order.order_status == 'Returned' or order.order_status == 'Return Requested'  %}disabled{% endif %}>
                                     Update
                                 </button>
                             </div>

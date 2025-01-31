@@ -28,6 +28,10 @@
                         <p class="mb-1">
                             <span>Price: </span>₹{{ item.product.selling_price }}
                         </p>
+
+                        {% if item.error_message %}
+                        <p class="text-danger"><strong>{{ item.error_message }}</strong></p>
+                        {% endif %}
                     </div>
                     
                     <!-- Quantity, Subtotal & Remove -->
@@ -86,8 +90,8 @@
                 <!-- Proceed to Checkout Button -->
                 <a 
                     href="{% url 'checkoutPage' %}" 
-                    class="btn btn-warning w-100 {% if not cartItems %}disabled{% endif %}"
-                    {% if not cartItems %}aria-disabled="true"{% endif %}
+                    class="btn btn-warning w-100 {% if not cartItems or not isCartValid %}disabled{% endif %}"
+                    {% if not cartItems or not isCartValid %}aria-disabled="true"{% endif %}
                 >
                     Proceed to Checkout
                 </a>

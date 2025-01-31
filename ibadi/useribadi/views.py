@@ -516,7 +516,9 @@ def addAddress(request):
         newAddress = Address(user=user, name=name, phone=phone, address=address, city=city, pincode=pincode, landmark=landmark)
         newAddress.save()
         messages.success(request, 'Address successfully Added')
-        return redirect('userAddress')
+
+        nextPage = request.GET.get('next','userAddress')
+        return redirect(nextPage)
     return render(request,'useribadi/addAddress.html')
 
 
@@ -623,11 +625,16 @@ def myCart(request):
         del request.session['applied_coupon']
     
     cartItems = Cart.objects.filter(user=request.user)
-
     cartItemwithSubTotal = []
+    isCartValid = True
+
     for item in cartItems:
         productSubTotal = item.product.selling_price * item.quantity
         mainImage = item.product.product_images.filter(is_main=True).first()
+
+        if item.quantity > item.product.quantity:
+            isCartValid = False
+            item.error_message = f"Sorry, only {item.product.quantity} of {item.product.product_name} is available."
 
         variant = None
         if hasattr(item.product, 'variant'):
@@ -638,7 +645,8 @@ def myCart(request):
             'image':mainImage.images.url,
             'quantity':item.quantity,
             'subTotal':productSubTotal,
-            'variant':variant
+            'variant':variant,
+            'error_message': getattr(item, 'error_message', None),
         })
 
     cartSubTotal = sum(item['subTotal'] for item in cartItemwithSubTotal)
@@ -649,7 +657,8 @@ def myCart(request):
         'cartItems':cartItemwithSubTotal,
         'cartSubTotal':cartSubTotal,
         'deliveryCharge':deliveryCharge,
-        'cartTotal':cartTotal
+        'cartTotal':cartTotal,
+        'isCartValid':isCartValid
         })
 
 
@@ -918,7 +927,7 @@ def checkoutPage(request):
             try:
                 wallet = Wallet.objects.filter(user=request.user).latest('created_at')
             except Wallet.DoesNotExist:
-                messages.error(request,'Wallet not found')
+                messages.error(request,'Insufficient balance in wellet! Please try another payment method')
                 return redirect('checkoutPage')
             if wallet.current_balance < final_amount:
                 messages.error(request, 'Insufficient balance in wallet! Please try another payment method')
